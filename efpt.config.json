@@ -1,0 +1,162 @@
+﻿{
+   "CodeGenerationMode": 3,
+   "ContextClassName": "FunNowContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "PrjFunNowWebApi",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[City]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Comments]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[CommentTravelerType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Country]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Coupon]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Dialog]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Hotel]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Hotel_Equipment_Reference]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelEquipment]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelImages]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelLikes]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImageCategory]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ImageCategory_Reference]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Member]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Order]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[OrderDetails]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[OrderStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[PaymentStatus]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RatingScores]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ReportReviews]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ReportSubtitles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[ReportTitles]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Role]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Room]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Room_Equipment_Reference]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RoomEquipment]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RoomImage]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[RoomType]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TravelerTypes]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDateOnlyTimeOnly": false,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false
+}

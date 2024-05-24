@@ -1,4 +1,20 @@
+using Microsoft.EntityFrameworkCore;
+using PrjFunNowWebApi.Models;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<FunNowContext>(
+    options => options.UseSqlServer(
+        builder.Configuration.GetConnectionString("FunNowConnection")
+));
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+});
+
 
 // Add services to the container.
 
@@ -7,7 +23,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+
 var app = builder.Build();
+app.UseCors("AllowAll");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
