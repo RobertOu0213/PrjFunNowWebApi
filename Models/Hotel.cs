@@ -27,6 +27,8 @@ public partial class Hotel
 
     public string Longitude { get; set; }
 
+    public bool? IsActive { get; set; }
+
     public virtual City City { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();

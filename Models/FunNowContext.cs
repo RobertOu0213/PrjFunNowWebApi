@@ -200,6 +200,9 @@ public partial class FunNowContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50);
             entity.Property(e => e.HotelTypeId).HasColumnName("HotelTypeID");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValueSql("((0))")
+                .HasColumnName("isActive");
 
             entity.HasOne(d => d.City).WithMany(p => p.Hotels)
                 .HasForeignKey(d => d.CityId)
