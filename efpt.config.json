@@ -51,7 +51,7 @@
          "ObjectType": 0
       },
       {
-         "Name": "[dbo].[HotelImages]",
+         "Name": "[dbo].[HotelImage]",
          "ObjectType": 0
       },
       {

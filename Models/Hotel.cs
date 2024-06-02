@@ -27,6 +27,10 @@ public partial class Hotel
 
     public string Longitude { get; set; }
 
+    public bool? IsActive { get; set; }
+
+    public int MemberId { get; set; }
+
     public virtual City City { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
@@ -38,6 +42,8 @@ public partial class Hotel
     public virtual ICollection<HotelLike> HotelLikes { get; set; } = new List<HotelLike>();
 
     public virtual HotelType HotelType { get; set; }
+
+    public virtual Member Member { get; set; }
 
     public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

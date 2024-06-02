@@ -13,8 +13,6 @@ public partial class HotelImage
 
     public string HotelImage1 { get; set; }
 
-    public string HimageDescription { get; set; }
-
     public virtual Hotel Hotel { get; set; }
 
     public virtual ICollection<ImageCategoryReference> ImageCategoryReferences { get; set; } = new List<ImageCategoryReference>();
