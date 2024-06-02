@@ -31,9 +31,13 @@ public partial class Member
 
     public virtual ICollection<HotelLike> HotelLikes { get; set; } = new List<HotelLike>();
 
+    public virtual ICollection<Hotel> Hotels { get; set; } = new List<Hotel>();
+
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
     public virtual ICollection<ReportReview> ReportReviews { get; set; } = new List<ReportReview>();
 
     public virtual Role Role { get; set; }
+
+    public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
 }

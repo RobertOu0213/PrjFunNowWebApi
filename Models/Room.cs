@@ -25,7 +25,11 @@ public partial class Room
 
     public int MaximumOccupancy { get; set; }
 
+    public int MemberId { get; set; }
+
     public virtual Hotel Hotel { get; set; }
+
+    public virtual Member Member { get; set; }
 
     public virtual ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
 
