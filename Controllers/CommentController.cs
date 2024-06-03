@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.joannaDTO;
 using System.Reflection.Metadata.Ecma335;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -26,24 +27,24 @@ namespace PrjFunNowWebApi.Controllers
         }
         //從資料庫取評論
         [HttpGet]
-        public IActionResult GetComments(int page = 1, int pageSize = 10, string search = null, int ratingFilter = 0, string dateFilter = null)
+        public IActionResult GetComments([FromQuery]CommentDTO queryparas)
         {
             //取評論
             var query = _context.Comments.Include(c => c.RatingScores).AsQueryable();
 
-            if (!string.IsNullOrEmpty(search))
+            if (!string.IsNullOrEmpty(queryparas.Search))
             {
-                query = query.Where(c => c.CommentText.Contains(search) || c.CommentTitle.Contains(search));
+                query = query.Where(c => c.CommentText.Contains(queryparas.Search) || c.CommentTitle.Contains(queryparas.Search));
             }
 
-            if (ratingFilter > 0)
+            if (queryparas.RatingFilter > 0)
             {
-                query = ApplyRatingFilter(query, ratingFilter);
+                query = ApplyRatingFilter(query, queryparas.RatingFilter);
             }
 
-            if (!string.IsNullOrEmpty(dateFilter))
+            if (!string.IsNullOrEmpty(queryparas.DateFilter))
             {
-                var month = GetMonthFilter(dateFilter);
+                var month = GetMonthFilter(queryparas.DateFilter);
                 query = query.Where(c => c.CreatedAt.Month == month);
             }
 
@@ -51,8 +52,8 @@ namespace PrjFunNowWebApi.Controllers
             var totalItems = query.Count();
             var comments = query
                 .OrderBy(c => c.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((queryparas.Page - 1) * queryparas.PageSize)
+                .Take(queryparas.PageSize)
                 .ToList();
 
             //各項平均
