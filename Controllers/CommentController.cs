@@ -26,22 +26,31 @@ namespace PrjFunNowWebApi.Controllers
             return Ok(comments);
         }
         //從資料庫取評論
-        [HttpGet]
-        public IActionResult GetComments([FromQuery]CommentDTO queryparas)
+        [HttpGet("CommentFilter")]
+        public IActionResult GetComments([FromQuery] CommentDTO queryparas, [FromQuery]int? HotelId)
         {
             //取評論
             var query = _context.Comments.Include(c => c.RatingScores).AsQueryable();
 
+            // 依據 hotelId 過濾評論
+            if (HotelId.HasValue)
+            {
+                query = query.Where(c => c.HotelId == HotelId.Value);
+            }
+
+            // 依據搜索條件過濾評論
             if (!string.IsNullOrEmpty(queryparas.Search))
             {
                 query = query.Where(c => c.CommentText.Contains(queryparas.Search) || c.CommentTitle.Contains(queryparas.Search));
             }
 
+            // 依據評分過濾評論
             if (queryparas.RatingFilter > 0)
             {
                 query = ApplyRatingFilter(query, queryparas.RatingFilter);
             }
 
+            // 依據月份過濾評論
             if (!string.IsNullOrEmpty(queryparas.DateFilter))
             {
                 var month = GetMonthFilter(queryparas.DateFilter);
@@ -93,7 +102,9 @@ namespace PrjFunNowWebApi.Controllers
             return BadRequest(new { success = false });
         }
 
+
         //評論分數篩選器
+        [HttpGet("ApplyRatingFilter")]
         private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
         {
             switch (ratingFilter)
@@ -130,6 +141,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         //評論月份篩選器
+        [HttpGet("GetMonthFilter")]
         private int GetMonthFilter(string dateFilter)
         {
             switch (dateFilter)
@@ -140,6 +152,7 @@ namespace PrjFunNowWebApi.Controllers
                 case "12-2月": return 12;
                 default: return 0;
             }
+
         }
 
 
