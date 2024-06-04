@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.DTO;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -27,45 +28,10 @@ namespace PrjFunNowWebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<Hotel>> PostHotel([FromForm] string hotelData, [FromForm] string hotelEquipmentData)
         {
-            //var hotel = JsonSerializer.Deserialize<Hotel>(hotelData);
-            //var hotelEquipments = JsonSerializer.Deserialize<List<int>>(hotelEquipmentData);
-
-            //if (hotel != null)
-            //{   
-            //    Hotel newHotel = new Hotel
-            //    {
-            //        HotelName = hotel.HotelName,
-            //        HotelAddress = hotel.HotelAddress,
-            //        HotelPhone = hotel.HotelPhone,
-            //        LevelStar = hotel.LevelStar,
-            //        HotelDescription = hotel.HotelDescription,
-            //        HotelTypeId = hotel.HotelTypeId,
-            //        Latitude = null,
-            //        Longitude = null,
-            //        CityId = 10,
-            //        MemberId = 1,
-            //    };
-            //    _context.Hotels.Add(newHotel);
-            //    await _context.SaveChangesAsync();
-
-            //    foreach (var equipmentId in hotelEquipments)
-            //    {
-            //        _context.HotelEquipmentReferences.Add(new HotelEquipmentReference
-            //        {
-            //            HotelEquipmentId = equipmentId,
-
-            //        });
-            //    }
-
-            //    await _context.SaveChangesAsync();
-            //    return Ok(new { success = true });
-            //}
-
-            //return BadRequest(new { success = false });
 
             try
             {
-                var hotel = JsonSerializer.Deserialize<Hotel>(hotelData);
+                var hotel = JsonSerializer.Deserialize<HotelDTO>(hotelData);
                 var hotelEquipments = JsonSerializer.Deserialize<List<int>>(hotelEquipmentData);
 
                 if (hotel != null)
@@ -75,16 +41,16 @@ namespace PrjFunNowWebApi.Controllers
                         HotelName = hotel.HotelName,
                         HotelAddress = "123",
                         HotelPhone = hotel.HotelPhone,
-                        LevelStar = hotel.LevelStar,
+                        LevelStar = int.Parse(hotel.LevelStar),
                         HotelDescription = hotel.HotelDescription,
-                        HotelTypeId = hotel.HotelTypeId,
+                        HotelTypeId = Convert.ToInt32(hotel.TypeID),
                         Latitude = null,
                         Longitude = null,
                         CityId = 10,
                         MemberId = 1,
                     };
                     _context.Hotels.Add(newHotel);
-                    await _context.SaveChangesAsync();
+                    //await _context.SaveChangesAsync();
 
                     foreach (var equipmentId in hotelEquipments)
                     {
