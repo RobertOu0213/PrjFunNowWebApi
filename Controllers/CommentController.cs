@@ -18,88 +18,114 @@ namespace PrjFunNowWebApi.Controllers
         {
             _context = context;
         }
-       
-        [HttpGet("GetComment")]
-        public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
-        {
-            var comments = await _context.Comments.ToListAsync();
-            return Ok(comments);
-        }
+
+        //[HttpGet("GetComment")]
+        //public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
+        //{
+        //    var comments = await _context.Comments.ToListAsync();
+        //    return Ok(comments);
+        //}
         //從資料庫取評論
-        [HttpGet("CommentFilter")]
-        public IActionResult GetComments([FromQuery] CommentDTO queryparas, [FromQuery]int? HotelId)
+        [HttpGet("GetComment")]
+        public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null)
         {
-            //取評論
-            var query = _context.Comments.Include(c => c.RatingScores).AsQueryable();
-
-            // 依據 hotelId 過濾評論
-            if (HotelId.HasValue)
+            try
             {
-                query = query.Where(c => c.HotelId == HotelId.Value);
+                // 获取评论
+                var commentsQuery = _context.Comments
+                                            .Where(c => c.HotelId == hotelId)
+                                            .Include(c => c.RatingScores)
+                                            .AsQueryable();
+
+                // 过滤搜索条件
+                if (!string.IsNullOrEmpty(search))
+                {
+                    commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
+                }
+
+                // 过滤评分条件
+                if (ratingFilter.HasValue && ratingFilter.Value > 0)
+                {
+                    commentsQuery = commentsQuery.Where(c => c.RatingScores.Any(r => r.ComfortScore >= ratingFilter.Value));
+                }
+
+                // 过滤日期条件
+                if (!string.IsNullOrEmpty(dateFilter))
+                {
+                    if (DateTime.TryParse(dateFilter, out DateTime parsedDate))
+                    {
+                        commentsQuery = commentsQuery.Where(c => c.CreatedAt.Date == parsedDate.Date);
+                    }
+                }
+
+                var totalItems = commentsQuery.Count();
+
+                var comments = commentsQuery
+                    .OrderBy(c => c.CreatedAt)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new CommentDTO
+                    {
+                        CommentId = c.CommentId,
+                        HotelId = c.HotelId,
+                        CommentTitle = c.CommentTitle,
+                        CommentText = c.CommentText,
+                        CreatedAt = c.CreatedAt,
+                        RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
+                        {
+                            RatingId = r.RatingId,
+                            CommentId = r.CommentId,
+                            ComfortScore = r.ComfortScore,
+                            CleanlinessScore = r.CleanlinessScore,
+                            StaffScore = r.StaffScore,
+                            FacilitiesScore = r.FacilitiesScore,
+                            ValueScore = r.ValueScore,
+                            LocationScore = r.LocationScore,
+                            FreeWifiScore = r.FreeWifiScore
+                        }).ToList()
+                    }).ToList();
+
+                var ratingScores = comments.SelectMany(c => c.RatingScores).ToList();
+
+                var averageScores = new
+                {
+                    ComfortScore = ratingScores.Any() ? ratingScores.Average(r => r.ComfortScore) : 0,
+                    CleanlinessScore = ratingScores.Any() ? ratingScores.Average(r => r.CleanlinessScore) : 0,
+                    StaffScore = ratingScores.Any() ? ratingScores.Average(r => r.StaffScore) : 0,
+                    FacilitiesScore = ratingScores.Any() ? ratingScores.Average(r => r.FacilitiesScore) : 0,
+                    ValueScore = ratingScores.Any() ? ratingScores.Average(r => r.ValueScore) : 0,
+                    LocationScore = ratingScores.Any() ? ratingScores.Average(r => r.LocationScore) : 0,
+                    FreeWifiScore = ratingScores.Any() ? ratingScores.Average(r => r.FreeWifiScore) : 0
+                };
+
+                var totalAverageScore = (averageScores.ComfortScore +
+                                         averageScores.CleanlinessScore +
+                                         averageScores.StaffScore +
+                                         averageScores.FacilitiesScore +
+                                         averageScores.ValueScore +
+                                         averageScores.LocationScore +
+                                         averageScores.FreeWifiScore) / 7;
+
+                var hotelName = _context.Hotels
+                                        .Where(h => h.HotelId == hotelId)
+                                        .Select(h => h.HotelName)
+                                        .FirstOrDefault();
+
+                return Ok(new
+                {
+                    TotalItems = totalItems,
+                    Comments = comments,
+                    AverageScore = averageScores,
+                    TotalAverageScore = totalAverageScore,
+                    HotelName = hotelName
+                });
             }
-
-            // 依據搜索條件過濾評論
-            if (!string.IsNullOrEmpty(queryparas.Search))
+            catch (Exception ex)
             {
-                query = query.Where(c => c.CommentText.Contains(queryparas.Search) || c.CommentTitle.Contains(queryparas.Search));
+                // 记录错误信息
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "Internal server error");
             }
-
-            // 依據評分過濾評論
-            if (queryparas.RatingFilter > 0)
-            {
-                query = ApplyRatingFilter(query, queryparas.RatingFilter);
-            }
-
-            // 依據月份過濾評論
-            if (!string.IsNullOrEmpty(queryparas.DateFilter))
-            {
-                var month = GetMonthFilter(queryparas.DateFilter);
-                query = query.Where(c => c.CreatedAt.Month == month);
-            }
-
-            //分頁
-            var totalItems = query.Count();
-            var comments = query
-                .OrderBy(c => c.CreatedAt)
-                .Skip((queryparas.Page - 1) * queryparas.PageSize)
-                .Take(queryparas.PageSize)
-                .ToList();
-
-            //各項平均
-            var averageScores = new
-            {
-                ComfortScore = _context.RatingScores.Average(r => r.ComfortScore),
-                CleanlinessScore = _context.RatingScores.Average(r => r.CleanlinessScore),
-                StaffScore = _context.RatingScores.Average(r => r.StaffScore),
-                FacilitiesScore = _context.RatingScores.Average(r => r.FacilitiesScore),
-                ValueScore = _context.RatingScores.Average(r => r.ValueScore),
-                LocationScore = _context.RatingScores.Average(r => r.LocationScore),
-                FreeWifiScore = _context.RatingScores.Average(r => r.FreeWifiScore),
-            };
-
-            //總平均
-            var totalAverageScore = (averageScores.ComfortScore +
-                                     averageScores.CleanlinessScore +
-                                     averageScores.StaffScore +
-                                     averageScores.FacilitiesScore +
-                                     averageScores.ValueScore +
-                                     averageScores.LocationScore +
-                                     averageScores.FreeWifiScore) / 7;
-
-            return Ok(new { TotlaItems = totalItems, Comments = comments, AverageScore = averageScores, TotalAverageScore = totalAverageScore });
-        }
-
-        //存入評論
-        [HttpPost("PostComment")]
-        public IActionResult PostComment(Comment comment)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Comments.Add(comment);
-                _context.SaveChanges();
-                return Ok(new { success = true });
-            }
-            return BadRequest(new { success = false });
         }
 
 
