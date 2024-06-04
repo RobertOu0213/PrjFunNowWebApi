@@ -296,9 +296,6 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
-            entity.Property(e => e.CityName)
-                .IsRequired()
-                .HasMaxLength(50);
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
@@ -310,6 +307,7 @@ public partial class FunNowContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50);
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
+            entity.Property(e => e.HotelImage).IsRequired();
             entity.Property(e => e.HotelName)
                 .IsRequired()
                 .HasMaxLength(100);
@@ -317,7 +315,6 @@ public partial class FunNowContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50);
             entity.Property(e => e.HotelPrice).HasColumnType("decimal(38, 6)");
-            entity.Property(e => e.HotelTypeName).IsRequired();
             entity.Property(e => e.IsActive).HasColumnName("isActive");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
         });
