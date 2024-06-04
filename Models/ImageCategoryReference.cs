@@ -9,7 +9,7 @@ public partial class ImageCategoryReference
 {
     public int ImageCategoryReferenceId { get; set; }
 
-    public int ImageHotelId { get; set; }
+    public int ImageCategoryId { get; set; }
 
     public int HotelImageId { get; set; }
 

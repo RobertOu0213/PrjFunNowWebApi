@@ -7,7 +7,7 @@ namespace PrjFunNowWebApi.Models;
 
 public partial class ImageCategory
 {
-    public int ImageHotelId { get; set; }
+    public int ImageCategoryId { get; set; }
 
     public string ImageCategoryName { get; set; }
 
