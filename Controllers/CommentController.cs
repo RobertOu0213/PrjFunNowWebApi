@@ -26,7 +26,7 @@ namespace PrjFunNowWebApi.Controllers
         //    return Ok(comments);
         //}
         //從資料庫取評論
-        [HttpGet("GetComment")]
+        [HttpGet("{hotelId}/Getcomments")]
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null)
         {
             try
@@ -98,6 +98,10 @@ namespace PrjFunNowWebApi.Controllers
                     FreeWifiScore = ratingScores.Any() ? ratingScores.Average(r => r.FreeWifiScore) : 0
                 };
 
+                var hotelName = _context.Hotels
+                                       .Where(h => h.HotelId == hotelId)
+                                       .Select(h => h.HotelName)
+                                       .FirstOrDefault();
                 var totalAverageScore = (averageScores.ComfortScore +
                                          averageScores.CleanlinessScore +
                                          averageScores.StaffScore +
@@ -106,10 +110,7 @@ namespace PrjFunNowWebApi.Controllers
                                          averageScores.LocationScore +
                                          averageScores.FreeWifiScore) / 7;
 
-                var hotelName = _context.Hotels
-                                        .Where(h => h.HotelId == hotelId)
-                                        .Select(h => h.HotelName)
-                                        .FirstOrDefault();
+               
 
                 return Ok(new
                 {
@@ -129,8 +130,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //評論分數篩選器
-        [HttpGet("ApplyRatingFilter")]
+        //評論分數篩選器       
         private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
         {
             switch (ratingFilter)
@@ -167,7 +167,6 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         //評論月份篩選器
-        [HttpGet("GetMonthFilter")]
         private int GetMonthFilter(string dateFilter)
         {
             switch (dateFilter)
@@ -181,7 +180,6 @@ namespace PrjFunNowWebApi.Controllers
 
         }
 
-
         //------------------------------------------------------------------------------------------------------------
         //------------------------------------------------------------------------------------------------------------
 
@@ -193,28 +191,28 @@ namespace PrjFunNowWebApi.Controllers
         //}
 
         // GET api/<CommentController>/5
-        [HttpGet("{id}")]
-        public string Get(int id)
-        {
-            return "value";
-        }
+        //[HttpGet("{id}")]
+        //public string Get(int id)
+        //{
+        //    return "value";
+        //}
 
-        // POST api/<CommentController>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
+        //// POST api/<CommentController>
+        //[HttpPost]
+        //public void Post([FromBody] string value)
+        //{
+        //}
 
-        // PUT api/<CommentController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
+        //// PUT api/<CommentController>/5
+        //[HttpPut("{id}")]
+        //public void Put(int id, [FromBody] string value)
+        //{
+        //}
 
-        // DELETE api/<CommentController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
+        //// DELETE api/<CommentController>/5
+        //[HttpDelete("{id}")]
+        //public void Delete(int id)
+        //{
+        //}
     }
 }

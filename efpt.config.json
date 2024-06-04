@@ -133,6 +133,10 @@
       {
          "Name": "[dbo].[TravelerTypes]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelSearchBox]",
+         "ObjectType": 3
       }
    ],
    "UiHint": null,
