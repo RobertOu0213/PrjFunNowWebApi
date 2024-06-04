@@ -166,6 +166,27 @@ namespace PrjFunNowWebApi.Controllers
             return query;
         }
 
+        private Dictionary<int, int> GetRatingCounts(IQueryable<Comment> query)
+        {
+            var counts = new Dictionary<int, int>
+    {
+        { 2, 0 }, // 超讚: 9+
+        { 3, 0 }, // 很讚: 7-9
+        { 4, 0 }, // 很好: 5-7
+        { 5, 0 }, // 尚可: 3-5
+        { 6, 0 }  // 低於預期: 1-3
+    };
+
+            foreach (var rating in counts.Keys)
+            {
+                counts[rating] = ApplyRatingFilter(query, rating).Count();
+            }
+
+            return counts;
+        }
+
+
+
         //評論月份篩選器
         private int GetMonthFilter(string dateFilter)
         {
