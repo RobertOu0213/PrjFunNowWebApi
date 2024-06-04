@@ -331,7 +331,7 @@ public partial class FunNowContext : DbContext
         {
             entity.ToTable("ImageCategory");
 
-            entity.Property(e => e.ImageCategoryId).HasColumnName("ImageCategoryID");
+            entity.Property(e => e.ImageHotelId).HasColumnName("ImageHotelId");
             entity.Property(e => e.ImageCategoryName).IsRequired();
         });
 
@@ -341,7 +341,7 @@ public partial class FunNowContext : DbContext
 
             entity.Property(e => e.ImageCategoryReferenceId).HasColumnName("ImageCategoryReferenceID");
             entity.Property(e => e.HotelImageId).HasColumnName("HotelImageID");
-            entity.Property(e => e.ImageCategoryId).HasColumnName("ImageCategoryID");
+            entity.Property(e => e.ImageHotelId).HasColumnName("ImageHotelId");
             entity.Property(e => e.RoomImageId).HasColumnName("RoomImageID");
 
             entity.HasOne(d => d.HotelImage).WithMany(p => p.ImageCategoryReferences)
@@ -350,7 +350,7 @@ public partial class FunNowContext : DbContext
                 .HasConstraintName("FK_ImageCategory_Reference_HotelImage");
 
             entity.HasOne(d => d.ImageCategory).WithMany(p => p.ImageCategoryReferences)
-                .HasForeignKey(d => d.ImageCategoryId)
+                .HasForeignKey(d => d.ImageHotelId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ImageCategory_Reference_ImageCategory");
 

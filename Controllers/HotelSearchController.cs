@@ -47,56 +47,55 @@ namespace PrjFunNowWebApi.Controllers
             return await _context.HotelSearchBoxes.Where(s => s.HotelName.Contains(keyword)).ToListAsync();
         }
 
-        public async Task<ActionResult<HotelSearchDTO>> GetSpotsBySearch(SearchDTO searchDTO)
+        [HttpPost]
+        public async Task<ActionResult<HotelsPagingDTO>> GetHotelsBySearch(HotelSearchDTO hotelSearchDTO)
         {
 
+            //根據Hotel分類編號搜尋Hotel分類資料 //未修正
+            var Hotels = hotelSearchDTO.HotelId == 0 ? _context.HotelSearchBoxes : _context.HotelSearchBoxes.Where(s => s.HotelId == hotelSearchDTO.HotelId);
+
+            //根據關鍵字搜尋景點資料(HotelName、desc) 
+            if (!string.IsNullOrEmpty(hotelSearchDTO.keyword))
+            {
+                Hotels = Hotels.Where(s => s.HotelName.Contains(hotelSearchDTO.keyword) || s.HotelDescription.Contains(hotelSearchDTO.keyword));
+            }
+
+            //排序
+            switch (hotelSearchDTO.sortBy)
+            {
+                case "HotelName":
+                    Hotels =hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.HotelName) : Hotels.OrderByDescending(s => s.HotelName);
+                    break;
+                case "HotelId":
+                    Hotels =hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.HotelId) : Hotels.OrderByDescending(s => s.HotelId);
+                    break;
+                default:
+                    Hotels = hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.LevelStar) : Hotels.OrderByDescending(s => s.LevelStar);
+                    break;
+            }
+
+            //總共有多少筆資料
+            int totalCount = Hotels.Count();
+            //每頁要顯示幾筆資料
+            int pageSize = hotelSearchDTO.pageSize ?? 9;   //searchDTO.pageSize ?? 9;
+            //目前第幾頁
+            int page = hotelSearchDTO.page ?? 1;
+
+            //計算總共有幾頁
+            int totalPages = (int)Math.Ceiling((decimal)totalCount / pageSize);
+
+            //分頁
+            Hotels = Hotels.Skip((page - 1) * pageSize).Take(pageSize);
 
 
-            ////根據分類編號搜尋景點資料
-            //var spots = searchDTO.categoryId == 0 ? _context.SpotImagesSpots : _context.SpotImagesSpots.Where(s => s.CategoryId == searchDTO.categoryId);
-
-            ////根據關鍵字搜尋景點資料(title、desc) 
-            //if (!string.IsNullOrEmpty(searchDTO.keyword))
-            //{
-            //    spots = spots.Where(s => s.SpotTitle.Contains(searchDTO.keyword) || s.SpotDescription.Contains(searchDTO.keyword));
-            //}
-
-            ////排序
-            //switch (searchDTO.sortBy)
-            //{
-            //    case "spotTitle":
-            //        spots = searchDTO.sortType == "asc" ? spots.OrderBy(s => s.SpotTitle) : spots.OrderByDescending(s => s.SpotTitle);
-            //        break;
-            //    case "categoryId":
-            //        spots = searchDTO.sortType == "asc" ? spots.OrderBy(s => s.CategoryId) : spots.OrderByDescending(s => s.CategoryId);
-            //        break;
-            //    default:
-            //        spots = searchDTO.sortType == "asc" ? spots.OrderBy(s => s.SpotId) : spots.OrderByDescending(s => s.SpotId);
-            //        break;
-            //}
-
-            ////總共有多少筆資料
-            //int totalCount = spots.Count();
-            ////每頁要顯示幾筆資料
-            //int pageSize = searchDTO.pageSize ?? 9;   //searchDTO.pageSize ?? 9;
-            ////目前第幾頁
-            //int page = searchDTO.page ?? 1;
-
-            ////計算總共有幾頁
-            //int totalPages = (int)Math.Ceiling((decimal)totalCount / pageSize);
-
-            ////分頁
-            //spots = spots.Skip((page - 1) * pageSize).Take(pageSize);
+            //包裝要傳給client端的資料
+            HotelsPagingDTO HotelsPaging = new HotelsPagingDTO();
+            HotelsPaging.TotalCount = totalCount;
+            HotelsPaging.TotalPages = totalPages;
+            HotelsPaging.HotelsResult = await Hotels.ToListAsync();
 
 
-            ////包裝要傳給client端的資料
-            //SpotsPagingDTO spotsPaging = new SpotsPagingDTO();
-            //spotsPaging.TotalCount = totalCount;
-            //spotsPaging.TotalPages = totalPages;
-            //spotsPaging.SpotsResult = await spots.ToListAsync();
-
-
-            //return spotsPaging;
+            return HotelsPaging;
         }
 
 
