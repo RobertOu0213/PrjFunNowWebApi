@@ -22,9 +22,9 @@ namespace PrjFunNowWebApi.Controllers
 
         // GET: api/HotelSearch
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Hotel>>> GetHotels()
+        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetAllHotels()
         {
-            return await _context.Hotels.ToListAsync();
+            return await _context.HotelSearchBoxes.ToListAsync();
         }
 
         // GET: api/HotelSearch/5
@@ -40,6 +40,13 @@ namespace PrjFunNowWebApi.Controllers
 
             return hotel;
         }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByKey(string keyword)
+        {
+            return await _context.HotelSearchBoxes.Where(s => s.HotelName.Contains(keyword)).ToListAsync();
+        }
+
+
 
         // PUT: api/HotelSearch/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
