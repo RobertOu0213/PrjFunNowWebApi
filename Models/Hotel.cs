@@ -18,7 +18,7 @@ public partial class Hotel
     public string HotelDescription { get; set; }
 
     public int CityId { get; set; }
-
+ 
     public int HotelTypeId { get; set; }
 
     public int? LevelStar { get; set; }
