@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.joannaDTO;
 using System.Reflection.Metadata.Ecma335;
+using static PrjFunNowWebApi.Models.joannaDTO.CommentResponseDTO;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -64,7 +65,7 @@ namespace PrjFunNowWebApi.Controllers
                     .OrderBy(c => c.CreatedAt)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(c => new CommentDTO
+                    .Select(c => new CommentResponse
                     {
                         CommentId = c.CommentId,
                         HotelId = c.HotelId,
@@ -81,7 +82,8 @@ namespace PrjFunNowWebApi.Controllers
                             FacilitiesScore = r.FacilitiesScore,
                             ValueScore = r.ValueScore,
                             LocationScore = r.LocationScore,
-                            FreeWifiScore = r.FreeWifiScore
+                            FreeWifiScore = r.FreeWifiScore,
+                            TravelerType = r.TravelerType
                         }).ToList()
                     }).ToList();
 
@@ -96,6 +98,7 @@ namespace PrjFunNowWebApi.Controllers
                     ValueScore = ratingScores.Any() ? ratingScores.Average(r => r.ValueScore) : 0,
                     LocationScore = ratingScores.Any() ? ratingScores.Average(r => r.LocationScore) : 0,
                     FreeWifiScore = ratingScores.Any() ? ratingScores.Average(r => r.FreeWifiScore) : 0
+                    //travelerType = ratingScores.Any()?ratingScores(r => r.)
                 };
 
                 var hotelName = _context.Hotels
@@ -128,6 +131,25 @@ namespace PrjFunNowWebApi.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+
+        [HttpGet("commentCounts")]
+        public async Task<IActionResult> GetCommentCounts()
+        {
+            var counts = new Dictionary<int, int>
+        {
+            { 2, await ApplyRatingFilter(_context.Comments.AsQueryable(), 2).CountAsync() },
+            { 3, await ApplyRatingFilter(_context.Comments.AsQueryable(), 3).CountAsync() },
+            { 4, await ApplyRatingFilter(_context.Comments.AsQueryable(), 4).CountAsync() },
+            { 5, await ApplyRatingFilter(_context.Comments.AsQueryable(), 5).CountAsync() },
+            { 6, await ApplyRatingFilter(_context.Comments.AsQueryable(), 6).CountAsync() },
+        };
+
+            var total = await _context.Comments.CountAsync();
+
+            return Ok(new { total, counts });
+        }
+
 
 
         //評論分數篩選器       
