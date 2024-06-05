@@ -11,7 +11,7 @@ public partial class ImageCategoryReference
 
     public int ImageCategoryId { get; set; }
 
-    public int HotelImageId { get; set; }
+    public int? HotelImageId { get; set; }
 
     public int? RoomImageId { get; set; }
 
