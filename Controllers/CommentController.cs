@@ -31,7 +31,7 @@ namespace PrjFunNowWebApi.Controllers
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null)
         {
             try
-            {
+            {   
                 // 获取评论
                 var commentsQuery = _context.Comments
                                             .Where(c => c.HotelId == hotelId)
