@@ -4,9 +4,9 @@ namespace PrjFunNowWebApi.Controllers.louie_api
 {
     public class pgBackMemberController : Controller
     {
-        public IActionResult Index()
+        public IActionResult showAllMember()
         {
-            return View();
+            return Ok();
         }
     }
 }
