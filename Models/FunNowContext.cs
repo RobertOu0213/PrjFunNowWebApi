@@ -375,7 +375,8 @@ public partial class FunNowContext : DbContext
                 .HasMaxLength(255);
             entity.Property(e => e.Phone)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasMaxLength(50)
+                .HasDefaultValueSql("(N'尚未設定手機號碼')");
             entity.Property(e => e.RoleId)
                 .HasDefaultValueSql("((1))")
                 .HasColumnName("RoleID");

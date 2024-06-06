@@ -39,16 +39,13 @@ namespace PrjFunNowWebApi.Controllers
 
         //【Post】新增會員
         [HttpPost]
-        public async Task<ActionResult<SimpleMemberDTO>> CreateMember(SimpleMemberDTO simpleMember)
+        public async Task<ActionResult<RegisterMemberDTO>> CreateMember(RegisterMemberDTO registerMember)
         {
             Member members = new Member();
-            members.FirstName = simpleMember.FirstName;
-            members.Email = simpleMember.Email;
-            members.Password = simpleMember.Password;
-            members.Phone = simpleMember.Phone;
-            members.Birthday = simpleMember.Birthday;
-            members.Image = simpleMember.Image;
-            members.LastName = simpleMember.LastName;
+            members.FirstName = registerMember.FirstName;
+            members.Email = registerMember.Email;
+            members.Password = registerMember.Password;
+            members.LastName = registerMember.LastName;
 
             _context.Members.Add(members);
             await _context.SaveChangesAsync();
@@ -59,7 +56,7 @@ namespace PrjFunNowWebApi.Controllers
 
         //【Put】修改會員資料
         [HttpPut("{id}")]
-        public async Task<IActionResult> EditMember(int id, SimpleMemberDTO simpleMember)
+        public async Task<IActionResult> EditMember(int id, EditMemberDTO editMember)
         {
     
             var member = await _context.Members.FindAsync(id); //使用FindAsync方法從資料庫中找有沒有符合輸入id的MemberID
@@ -69,14 +66,13 @@ namespace PrjFunNowWebApi.Controllers
             }
 
             //如果有找到符合id的會員
-            // 把接受到的simpleMember資料更新到Member屬性中
-            member.FirstName = simpleMember.FirstName;
-            member.LastName = simpleMember.LastName;
-            member.Email = simpleMember.Email;
-            member.Password = simpleMember.Password;
-            member.Phone = simpleMember.Phone;
-            member.Birthday = simpleMember.Birthday;
-            member.Image = simpleMember.Image;
+            // 把接受到的editMember資料更新到Member屬性中
+            member.FirstName = editMember.FirstName;
+            member.LastName = editMember.LastName;
+            member.Password = editMember.Password;
+            member.Phone = editMember.Phone;
+            member.Birthday = editMember.Birthday;
+            member.Image = editMember.Image;
 
             try
             {

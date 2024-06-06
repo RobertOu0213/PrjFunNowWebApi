@@ -25,6 +25,7 @@ builder.Services.AddSwaggerGen();
 
 
 
+
 var app = builder.Build();
 app.UseCors("AllowAll");
 
@@ -35,9 +36,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
 
 app.MapControllers();
 
