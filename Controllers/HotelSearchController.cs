@@ -36,7 +36,8 @@ namespace PrjFunNowWebApi.Controllers
         {
             // 計算總人數
             int totalPeople = (indexhotelSearchDTO.adults ?? 0) + (indexhotelSearchDTO.children ?? 0);
-
+            ////計算每間房人數
+            //int peopleperroom = (totalPeople / indexhotelSearchDTO.roomnum)+1; //無條件進位
             // 查詢已被訂房的房間
             var orders = from k in _context.OrderDetails
                          where !(k.CheckInDate >= indexhotelSearchDTO.CheckOutDate || k.CheckOutDate <= indexhotelSearchDTO.CheckInDate)

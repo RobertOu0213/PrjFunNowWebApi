@@ -173,7 +173,9 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.DialogId).HasColumnName("DialogID");
             entity.Property(e => e.CalltoMemberId).HasColumnName("CalltoMemberID");
             entity.Property(e => e.CreateAt).HasColumnType("datetime");
-            entity.Property(e => e.Detail).IsRequired();
+            entity.Property(e => e.Detail)
+                .IsRequired()
+                .IsUnicode(false);
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
 
             entity.HasOne(d => d.Member).WithMany(p => p.Dialogs)
