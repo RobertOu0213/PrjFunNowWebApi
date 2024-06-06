@@ -13,6 +13,8 @@ public partial class Dialog
 
     public string Detail { get; set; }
 
+    public int CalltoMemberId { get; set; }
+
     public DateTime CreateAt { get; set; }
 
     public virtual Member Member { get; set; }
