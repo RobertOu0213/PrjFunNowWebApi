@@ -20,44 +20,38 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
-        //[HttpGet("GetComment")]
-        //public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
-        //{
-        //    var comments = await _context.Comments.ToListAsync();
-        //    return Ok(comments);
-        //}
+       
         //從資料庫取評論
         [HttpGet("{hotelId}/Getcomments")]
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null)
         {
             try
-            {   
-                // 获取评论
+            {
+                // 取得評論+篩選條件
                 var commentsQuery = _context.Comments
                                             .Where(c => c.HotelId == hotelId)
                                             .Include(c => c.RatingScores)
                                             .AsQueryable();
 
-                // 过滤搜索条件
+                // 搜索過濾
                 if (!string.IsNullOrEmpty(search))
                 {
                     commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
                 }
 
-                // 过滤评分条件
+                // 評分篩選
                 if (ratingFilter.HasValue && ratingFilter.Value > 0)
                 {
-                    commentsQuery = commentsQuery.Where(c => c.RatingScores.Any(r => r.ComfortScore >= ratingFilter.Value));
+                    //commentsQuery = commentsQuery.Where(c => c.RatingScores.Any(r => r.ComfortScore >= ratingFilter.Value));
+                    commentsQuery = ApplyRatingFilter(commentsQuery, ratingFilter.Value);
                 }
 
-                // 过滤日期条件
+                // 日期篩選r
                 if (!string.IsNullOrEmpty(dateFilter))
-                {
-                    if (DateTime.TryParse(dateFilter, out DateTime parsedDate))
+                    if (!string.IsNullOrEmpty(dateFilter) && DateTime.TryParse(dateFilter, out DateTime parsedDate))
                     {
                         commentsQuery = commentsQuery.Where(c => c.CreatedAt.Date == parsedDate.Date);
                     }
-                }
 
                 var totalItems = commentsQuery.Count();
 
@@ -135,7 +129,7 @@ namespace PrjFunNowWebApi.Controllers
 
         [HttpGet("commentCounts")]
         public async Task<IActionResult> GetCommentCounts()
-        {
+        {     
             var counts = new Dictionary<int, int>
         {
             { 2, await ApplyRatingFilter(_context.Comments.AsQueryable(), 2).CountAsync() },
@@ -152,76 +146,140 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-        //評論分數篩選器       
+        //評論分數篩選器
         private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
         {
             switch (ratingFilter)
             {
                 case 2: // 超讚: 9+
-                    query = query.Where(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 9);
+                    query = query.Where(c => c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 9);
                     break;
                 case 3: // 很讚: 7-9
-                    query = query.Where(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 7 &&
-                                             c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 9);
+                    query = query.Where(c => c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 7 &&
+                        c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 9);
                     break;
                 case 4: // 很好: 5-7
-                    query = query.Where(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 5 &&
-                                             c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 7);
+                    query = query.Where(c => c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 5 &&
+                        c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 7);
                     break;
                 case 5: // 尚可: 3-5
-                    query = query.Where(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 3 &&
-                                             c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 5);
+                    query = query.Where(c => c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) >= 3 &&
+                        c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 5);
                     break;
                 case 6: // 低於預期: 1-3
-                    query = query.Where(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                            r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 3);
+                    query = query.Where(c => c.RatingScores.Average(r =>
+                        (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7) < 3);
                     break;
             }
 
             return query;
         }
 
-        private Dictionary<int, int> GetRatingCounts(IQueryable<Comment> query)
+
+
+        [HttpGet("monthCounts")]
+        public async Task<IActionResult> GetMonthCounts(string dateFilter = null)
         {
-            var counts = new Dictionary<int, int>
-    {
-        { 2, 0 }, // 超讚: 9+
-        { 3, 0 }, // 很讚: 7-9
-        { 4, 0 }, // 很好: 5-7
-        { 5, 0 }, // 尚可: 3-5
-        { 6, 0 }  // 低於預期: 1-3
+            var query = _context.Comments.AsQueryable();
+            if (!string.IsNullOrEmpty(dateFilter))
+            {
+                query = ApplyDateFilter(query, dateFilter);
+            }
+
+            var monthRanges = new[]
+            {
+        new { Range = "3-5月", StartMonth = 3, EndMonth = 5 },
+        new { Range = "6-8月", StartMonth = 6, EndMonth = 8 },
+        new { Range = "9-11月", StartMonth = 9, EndMonth = 11 },
+        new { Range = "12-2月", StartMonth = 12, EndMonth = 2 }
     };
 
-            foreach (var rating in counts.Keys)
+            var monthCounts = new Dictionary<string, int>();
+
+            foreach (var range in monthRanges)
             {
-                counts[rating] = ApplyRatingFilter(query, rating).Count();
+                var startDate = GetStartDateForRange(range.StartMonth, range.EndMonth);
+                var endDate = startDate.AddMonths(3).AddDays(-1);
+
+                var count = await query.CountAsync(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate);
+                monthCounts.Add(range.Range, count);
             }
 
-            return counts;
+            return Ok(monthCounts);
         }
 
+        private DateTime GetStartDateForRange(int startMonth, int endMonth)
+        {
+            var currentYear = DateTime.Now.Year;
+            if (startMonth > endMonth) // For ranges like "12-2月"
+            {
+                var startDate = new DateTime(currentYear, startMonth, 1);
+                if (DateTime.Now.Month <= endMonth) // Current month is within the range
+                {
+                    startDate = startDate.AddYears(-1);
+                }
+                return startDate;
+            }
+            return new DateTime(currentYear, startMonth, 1);
+        }
 
+        // 應用日期篩選器
+        private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, string dateFilter)
+        {
+            int monthFilter = GetMonthFilter(dateFilter);
+            if (monthFilter != 0)
+            {
+                var startDate = GetStartDateForRange(monthFilter);
+                var endDate = startDate.AddMonths(3).AddDays(-1);
+                query = query.Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate);
+            }
+            return query;
+        }
 
-        //評論月份篩選器
+        private DateTime GetStartDateForRange(int monthFilter)
+        {
+            var currentYear = DateTime.Now.Year;
+            if (monthFilter == 12 && DateTime.Now.Month <= 2) // 跨年处理
+            {
+                return new DateTime(currentYear - 1, monthFilter, 1);
+            }
+            return new DateTime(currentYear, monthFilter, 1);
+        }
+
         private int GetMonthFilter(string dateFilter)
         {
-            switch (dateFilter)
+            return dateFilter switch
             {
-                case "3-5月": return 3;
-                case "6-8月": return 6;
-                case "9-11月": return 9;
-                case "12-2月": return 12;
-                default: return 0;
-            }
-
+                "3-5月" => 3,
+                "6-8月" => 6,
+                "9-11月" => 9,
+                "12-2月" => 12,
+                _ => 0,
+            };
         }
+
+        private IQueryable<Comment> ApplySort(IQueryable<Comment> query, string sortBy)
+        {
+            return sortBy switch
+            {
+                "oldest" => query.OrderBy(c => c.CreatedAt),
+                "highestScore" => query.OrderByDescending(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
+                                                                                              r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
+                "lowestScore" => query.OrderBy(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
+                                                                                  r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
+                _ => query.OrderByDescending(c => c.CreatedAt) // 預設按最新評論排序
+            };
+        }
+
+
+
 
         //------------------------------------------------------------------------------------------------------------
         //------------------------------------------------------------------------------------------------------------
