@@ -30,6 +30,57 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpPost]
+        [Route("indexsearch")]
+        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
+        {
+            // 計算總人數
+            int totalPeople = (indexhotelSearchDTO.adults ?? 0) + (indexhotelSearchDTO.children ?? 0);
+
+            // 查詢已被訂房的房間
+            var orders = from k in _context.OrderDetails
+                         where !(k.CheckInDate >= indexhotelSearchDTO.CheckOutDate || k.CheckOutDate <= indexhotelSearchDTO.CheckInDate)
+                         select k.RoomId;
+
+            // 查詢尚未被訂房的房間
+            var rooms = from r in _context.Rooms
+                        where !orders.Contains(r.RoomId)
+                        select r.HotelId;
+
+            // 查詢尚有空房的旅館並且總人數不超過旅館最大容納人數
+            var hotelsQuery = from h in _context.Hotels
+                              where rooms.Contains(h.HotelId) && totalPeople <= h.Rooms.Sum(s => s.MaximumOccupancy)
+                              select new HotelSearchBox
+                              {
+                                  HotelId = h.HotelId,
+                                  HotelName = h.HotelName,
+                                  HotelAddress = h.HotelAddress,
+                                  HotelPhone = h.HotelPhone,
+                                  HotelDescription = h.HotelDescription,
+                                  LevelStar = h.LevelStar,
+                                  Latitude = h.Latitude,
+                                  Longitude = h.Longitude,
+                                  IsActive = h.IsActive,
+                                  MemberId = h.MemberId,
+                                  CityName = h.City.CityName,
+                                  CountryName = h.City.Country.CountryName,
+                                  HotelEquipmentName = h.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).FirstOrDefault(), // 假设 HotelEquipmentReferences 是一个包含设备名称的集合
+                                  HotelImage = h.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(), // 假设 HotelImages 是一个包含图片URL的集合
+                                  HotelPrice = h.Rooms.Average(p => p.RoomPrice),
+                                  HotelMaximumOccupancy = h.Rooms.Sum(s => s.MaximumOccupancy)
+                              };
+
+            // 根據關鍵字篩選旅館
+            if (!string.IsNullOrEmpty(indexhotelSearchDTO.keyword))
+            {
+                hotelsQuery = hotelsQuery.Where(s => s.HotelName.Contains(indexhotelSearchDTO.keyword) || s.HotelDescription.Contains(indexhotelSearchDTO.keyword));
+            }
+
+            // 執行查詢並將結果轉換為 HotelSearchBox
+            var hotelList = await hotelsQuery.ToListAsync();
+            return Ok(hotelList);
+        }
+
 
 
         [HttpPost]

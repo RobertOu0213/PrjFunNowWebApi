@@ -35,9 +35,9 @@ public partial class HotelSearchBox
 
     public string CountryName { get; set; }
 
-    public string HotelEquipmentName { get; set; }
+    public string? HotelEquipmentName { get; set; }
 
-    public string HotelImage { get; set; }
+    public string? HotelImage { get; set; }
 
     public decimal? HotelPrice { get; set; }
 
