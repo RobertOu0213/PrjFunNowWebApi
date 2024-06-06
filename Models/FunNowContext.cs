@@ -347,7 +347,6 @@ public partial class FunNowContext : DbContext
 
             entity.HasOne(d => d.HotelImage).WithMany(p => p.ImageCategoryReferences)
                 .HasForeignKey(d => d.HotelImageId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ImageCategory_Reference_HotelImage");
 
             entity.HasOne(d => d.ImageCategory).WithMany(p => p.ImageCategoryReferences)
