@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
-using PrjFunNowWebApi.Hubs;
 using Microsoft.Extensions.Logging;  // 添加這一行
 
 namespace PrjFunNowWebApi.Controllers

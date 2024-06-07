@@ -1,11 +1,5 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using PrjFunNowWebApi.Hubs;
 using PrjFunNowWebApi.Models;
-using PrjFunNowWebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
