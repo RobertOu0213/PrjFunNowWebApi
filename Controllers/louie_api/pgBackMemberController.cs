@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.louie_dto;
 using System.Linq.Expressions;
+using PrjFunNowWebApi.Models.louie_class;
 
 namespace PrjFunNowWebApi.Controllers.louie_api
 {
@@ -19,7 +20,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
         }
         //限API內部使用--------------------------------------------------------------------------------
         //GetMembersByRole(): 用于获取成员列表并转换为 DTO
-        private async Task<List<pgBackMemberDTO>> getMembertoDTO(IQueryable<Member> query)
+        private async Task<List<pgBackMemberDTO>> getMembertoDTOAsync(IQueryable<Member> query)
         {
             var membersWithRoles = await query
             .Select(m => new pgBackMemberDTO
@@ -34,61 +35,74 @@ namespace PrjFunNowWebApi.Controllers.louie_api
 
             return membersWithRoles;
         }
+        //getPagingAsync():分頁
+        private async Task<CPaging<pgBackMemberDTO>> getPagingAsync(IQueryable<Member> query, int pageNumber, int pageSize)
+        {
+            int totalRecords = await query.CountAsync();
+
+            var pagedQuery = query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize);
+
+            var membersWithRoles = await getMembertoDTOAsync(pagedQuery);
+
+            return new CPaging<pgBackMemberDTO>(membersWithRoles, totalRecords, pageNumber, pageSize);
+        }
 
         //要被前端呼叫的http方法----------------------------------------------------------------------------
         //狀態篩選紐
-        [HttpGet("showAllMember")]
-        public async Task<ActionResult<IEnumerable<pgBackMemberDTO>>> showAllMember()//秀全部房客
+        [HttpPost("showAllMember")]
+        public async Task<ActionResult<CPaging<pgBackMemberDTO>>> showAllMember([FromBody] SearchParametersDTO searchParameters)//秀全部房客
         {
             IQueryable<Member> query = _context.Members
              .Where(m => m.RoleId == 1 || m.RoleId == 3);
 
-            var membersWithRoles = await getMembertoDTO(query);
+            var pagedResult = await getPagingAsync(query, searchParameters.PageNumber, searchParameters.PageSize);
 
-            return Ok(membersWithRoles);
+            return Ok(pagedResult);
         }
-        [HttpGet("showNormalMember")]
-        public async Task<ActionResult<IEnumerable<pgBackMemberDTO>>> showNormalMember()//秀正常房客
+        [HttpPost("showNormalMember")]
+        public async Task<ActionResult<CPaging<pgBackMemberDTO>>> showNormalMember([FromBody] SearchParametersDTO searchParameters)//秀正常房客
         {
             IQueryable<Member> query = _context.Members
              .Where(m => m.RoleId == 1);
 
-            var membersWithRoles = await getMembertoDTO(query);
+            var pagedResult = await getPagingAsync(query, searchParameters.PageNumber, searchParameters.PageSize);
 
-            return Ok(membersWithRoles);
+            return Ok(pagedResult);
         }
-        [HttpGet("showBlockedMember")]
-        public async Task<ActionResult<IEnumerable<pgBackMemberDTO>>> showBlockedMember()//秀被封鎖房客
+        [HttpPost("showBlockedMember")]
+        public async Task<ActionResult<CPaging<pgBackMemberDTO>>> showBlockedMember([FromBody] SearchParametersDTO searchParameters)//秀被封鎖房客
         {
             IQueryable<Member> query = _context.Members
              .Where(m => m.RoleId == 3);
 
-            var membersWithRoles = await getMembertoDTO(query);
+            var pagedResult = await getPagingAsync(query, searchParameters.PageNumber, searchParameters.PageSize);
 
-            return Ok(membersWithRoles);
+            return Ok(pagedResult);
         }
         //關鍵字搜尋
-        [HttpGet("showMemberContainsKeyword")]
-        public async Task<ActionResult<IEnumerable<pgBackMemberDTO>>> showMemberContainsKeyword([FromQuery] string keyword = "")
+        [HttpPost("showMemberContainsKeyword")]
+        public async Task<ActionResult<CPaging<pgBackMemberDTO>>> showMemberContainsKeyword([FromBody] SearchParametersDTO searchParameters)
         {
             IQueryable<Member> query = _context.Members;
 
-            if (string.IsNullOrEmpty(keyword))
+            if (string.IsNullOrEmpty(searchParameters.Keyword))
             {
                 query = query.Where(m => m.RoleId == 1 || m.RoleId == 3); // 没有关键字时，获取所有房客
             }
             else
             {
                 query = query.Where(m => (m.RoleId == 1 || m.RoleId == 3) &&
-                                         (m.FirstName.Contains(keyword) ||
-                                          m.LastName.Contains(keyword) ||
-                                          m.Email.Contains(keyword) ||
-                                          m.Phone.Contains(keyword))); // 有关键字时，根据关键字进行搜索
+                                         (m.FirstName.Contains(searchParameters.Keyword) ||
+                                          m.LastName.Contains(searchParameters.Keyword) ||
+                                          m.Email.Contains(searchParameters.Keyword) ||
+                                          m.Phone.Contains(searchParameters.Keyword))); // 有关键字时，根据关键字进行搜索
             }
 
-            var membersWithRoles = await getMembertoDTO(query);
+            var pagedResult = await getPagingAsync(query, searchParameters.PageNumber, searchParameters.PageSize);
 
-            return Ok(membersWithRoles);
+            return Ok(pagedResult);
         }
         //更改房客狀態
         [HttpPut("updateMemberRole")]
