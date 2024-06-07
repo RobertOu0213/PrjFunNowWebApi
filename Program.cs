@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,7 +26,24 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+var tkConf = builder.Configuration.GetSection("Jwt");
 
+var tokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuer = true, //讓使用者可以知道發行者
+    ValidateAudience = true,
+    ValidateLifetime = true, //可以針對過期的token給予拒絕
+    ValidateIssuerSigningKey = true,
+    ValidIssuer = tkConf["Issuer"],
+    ValidAudience = tkConf["Audience"],
+    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tkConf["Key"]))
+};
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.TokenValidationParameters = tokenValidationParameters;
+    });
 
 
 var app = builder.Build();
@@ -39,8 +59,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
-
 
 app.MapControllers();
 
