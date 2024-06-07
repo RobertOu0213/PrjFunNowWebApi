@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+
 
 // 設定資料庫連線
 builder.Services.AddDbContext<FunNowContext>(
@@ -34,6 +37,19 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+// 註冊 IEmailService
+builder.Services.AddSingleton<IEmailService, EmailService>();
+
+// 創建 IConfiguration 實例並設置環境變數
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddEnvironmentVariables()
+    .Build();
+
+// 將 IConfiguration 添加到服務容器
+builder.Services.AddSingleton(configuration);
 
 var app = builder.Build();
 
