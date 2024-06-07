@@ -20,38 +20,27 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
-       
+        //[HttpGet("GetComment")]
+        //public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
+        //{
+        //    var comments = await _context.Comments.ToListAsync();
+        //    return Ok(comments);
+        //}
         //從資料庫取評論
-        [HttpGet("{hotelId}/Getcomments")]
-        public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null)
+        [HttpGet("{hotelId}/GetComments")]
+        public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null)
         {
             try
             {
-                // 取得評論+篩選條件
                 var commentsQuery = _context.Comments
                                             .Where(c => c.HotelId == hotelId)
                                             .Include(c => c.RatingScores)
                                             .AsQueryable();
 
-                // 搜索過濾
                 if (!string.IsNullOrEmpty(search))
                 {
                     commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
                 }
-
-                // 評分篩選
-                if (ratingFilter.HasValue && ratingFilter.Value > 0)
-                {
-                    //commentsQuery = commentsQuery.Where(c => c.RatingScores.Any(r => r.ComfortScore >= ratingFilter.Value));
-                    commentsQuery = ApplyRatingFilter(commentsQuery, ratingFilter.Value);
-                }
-
-                // 日期篩選r
-                if (!string.IsNullOrEmpty(dateFilter))
-                    if (!string.IsNullOrEmpty(dateFilter) && DateTime.TryParse(dateFilter, out DateTime parsedDate))
-                    {
-                        commentsQuery = commentsQuery.Where(c => c.CreatedAt.Date == parsedDate.Date);
-                    }
 
                 var totalItems = commentsQuery.Count();
 
@@ -81,72 +70,113 @@ namespace PrjFunNowWebApi.Controllers
                         }).ToList()
                     }).ToList();
 
-                var ratingScores = comments.SelectMany(c => c.RatingScores).ToList();
-
-                var averageScores = new
-                {
-                    ComfortScore = ratingScores.Any() ? ratingScores.Average(r => r.ComfortScore) : 0,
-                    CleanlinessScore = ratingScores.Any() ? ratingScores.Average(r => r.CleanlinessScore) : 0,
-                    StaffScore = ratingScores.Any() ? ratingScores.Average(r => r.StaffScore) : 0,
-                    FacilitiesScore = ratingScores.Any() ? ratingScores.Average(r => r.FacilitiesScore) : 0,
-                    ValueScore = ratingScores.Any() ? ratingScores.Average(r => r.ValueScore) : 0,
-                    LocationScore = ratingScores.Any() ? ratingScores.Average(r => r.LocationScore) : 0,
-                    FreeWifiScore = ratingScores.Any() ? ratingScores.Average(r => r.FreeWifiScore) : 0
-                    //travelerType = ratingScores.Any()?ratingScores(r => r.)
-                };
-
                 var hotelName = _context.Hotels
-                                       .Where(h => h.HotelId == hotelId)
-                                       .Select(h => h.HotelName)
-                                       .FirstOrDefault();
-                var totalAverageScore = (averageScores.ComfortScore +
-                                         averageScores.CleanlinessScore +
-                                         averageScores.StaffScore +
-                                         averageScores.FacilitiesScore +
-                                         averageScores.ValueScore +
-                                         averageScores.LocationScore +
-                                         averageScores.FreeWifiScore) / 7;
-
-               
+                                        .Where(h => h.HotelId == hotelId)
+                                        .Select(h => h.HotelName)
+                                        .FirstOrDefault();
 
                 return Ok(new
                 {
                     TotalItems = totalItems,
                     Comments = comments,
-                    AverageScore = averageScores,
-                    TotalAverageScore = totalAverageScore,
                     HotelName = hotelName
                 });
             }
             catch (Exception ex)
             {
-                // 记录错误信息
                 Console.WriteLine(ex.Message);
                 return StatusCode(500, "Internal server error");
             }
         }
 
 
+
+        //評分過濾
         [HttpGet("commentCounts")]
         public async Task<IActionResult> GetCommentCounts()
-        {     
-            var counts = new Dictionary<int, int>
         {
-            { 2, await ApplyRatingFilter(_context.Comments.AsQueryable(), 2).CountAsync() },
-            { 3, await ApplyRatingFilter(_context.Comments.AsQueryable(), 3).CountAsync() },
-            { 4, await ApplyRatingFilter(_context.Comments.AsQueryable(), 4).CountAsync() },
-            { 5, await ApplyRatingFilter(_context.Comments.AsQueryable(), 5).CountAsync() },
-            { 6, await ApplyRatingFilter(_context.Comments.AsQueryable(), 6).CountAsync() },
-        };
+            // 计算评分评论数量和详细信息
+            var ratingCommentDetails = new Dictionary<int, object>
+    {
+        { 2, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 2).CountAsync(), Comments = await GetCommentsByRating(2) } },
+        { 3, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 3).CountAsync(), Comments = await GetCommentsByRating(3) } },
+        { 4, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 4).CountAsync(), Comments = await GetCommentsByRating(4) } },
+        { 5, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 5).CountAsync(), Comments = await GetCommentsByRating(5) } },
+        { 6, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 6).CountAsync(), Comments = await GetCommentsByRating(6) } },
+    };
+
+            // 计算月份评论数量和详细信息
+            var dateRanges = new[] { "3-5月", "6-8月", "9-11月", "12-2月" };
+            var dateCommentDetails = new Dictionary<string, object>();
+
+            foreach (var range in dateRanges)
+            {
+                dateCommentDetails[range] = new
+                {
+                    Count = await ApplyDateFilter(_context.Comments.AsQueryable(), range).CountAsync(),
+                    Comments = await GetCommentsByDateRange(range)
+                };
+            }
 
             var total = await _context.Comments.CountAsync();
 
-            return Ok(new { total, counts });
+            return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails });
         }
 
+        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int ratingFilter)
+        {
+            var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), ratingFilter)
+                               .Select(c => new CommentResponseDTO.CommentResponse
+                               {
+                                   CommentId = c.CommentId,
+                                   HotelId = c.HotelId,
+                                   CommentTitle = c.CommentTitle,
+                                   CommentText = c.CommentText,
+                                   CreatedAt = c.CreatedAt,
+                                   RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
+                                   {
+                                       RatingId = r.RatingId,
+                                       CommentId = r.CommentId,
+                                       ComfortScore = r.ComfortScore,
+                                       CleanlinessScore = r.CleanlinessScore,
+                                       StaffScore = r.StaffScore,
+                                       FacilitiesScore = r.FacilitiesScore,
+                                       ValueScore = r.ValueScore,
+                                       LocationScore = r.LocationScore,
+                                       FreeWifiScore = r.FreeWifiScore,
+                                       TravelerType = r.TravelerType
+                                   }).ToList()
+                               }).ToListAsync();
+            return comments;
+        }
 
+        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(string dateFilter)
+        {
+            var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), dateFilter)
+                               .Select(c => new CommentResponseDTO.CommentResponse
+                               {
+                                   CommentId = c.CommentId,
+                                   HotelId = c.HotelId,
+                                   CommentTitle = c.CommentTitle,
+                                   CommentText = c.CommentText,
+                                   CreatedAt = c.CreatedAt,
+                                   RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
+                                   {
+                                       RatingId = r.RatingId,
+                                       CommentId = r.CommentId,
+                                       ComfortScore = r.ComfortScore,
+                                       CleanlinessScore = r.CleanlinessScore,
+                                       StaffScore = r.StaffScore,
+                                       FacilitiesScore = r.FacilitiesScore,
+                                       ValueScore = r.ValueScore,
+                                       LocationScore = r.LocationScore,
+                                       FreeWifiScore = r.FreeWifiScore,
+                                       TravelerType = r.TravelerType
+                                   }).ToList()
+                               }).ToListAsync();
+            return comments;
+        }
 
-        //評論分數篩選器
         private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
         {
             switch (ratingFilter)
@@ -182,55 +212,6 @@ namespace PrjFunNowWebApi.Controllers
             return query;
         }
 
-
-
-        [HttpGet("monthCounts")]
-        public async Task<IActionResult> GetMonthCounts(string dateFilter = null)
-        {
-            var query = _context.Comments.AsQueryable();
-            if (!string.IsNullOrEmpty(dateFilter))
-            {
-                query = ApplyDateFilter(query, dateFilter);
-            }
-
-            var monthRanges = new[]
-            {
-        new { Range = "3-5月", StartMonth = 3, EndMonth = 5 },
-        new { Range = "6-8月", StartMonth = 6, EndMonth = 8 },
-        new { Range = "9-11月", StartMonth = 9, EndMonth = 11 },
-        new { Range = "12-2月", StartMonth = 12, EndMonth = 2 }
-    };
-
-            var monthCounts = new Dictionary<string, int>();
-
-            foreach (var range in monthRanges)
-            {
-                var startDate = GetStartDateForRange(range.StartMonth, range.EndMonth);
-                var endDate = startDate.AddMonths(3).AddDays(-1);
-
-                var count = await query.CountAsync(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate);
-                monthCounts.Add(range.Range, count);
-            }
-
-            return Ok(monthCounts);
-        }
-
-        private DateTime GetStartDateForRange(int startMonth, int endMonth)
-        {
-            var currentYear = DateTime.Now.Year;
-            if (startMonth > endMonth) // For ranges like "12-2月"
-            {
-                var startDate = new DateTime(currentYear, startMonth, 1);
-                if (DateTime.Now.Month <= endMonth) // Current month is within the range
-                {
-                    startDate = startDate.AddYears(-1);
-                }
-                return startDate;
-            }
-            return new DateTime(currentYear, startMonth, 1);
-        }
-
-        // 應用日期篩選器
         private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, string dateFilter)
         {
             int monthFilter = GetMonthFilter(dateFilter);
@@ -265,55 +246,63 @@ namespace PrjFunNowWebApi.Controllers
             };
         }
 
-        private IQueryable<Comment> ApplySort(IQueryable<Comment> query, string sortBy)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //計算評分平均
+        [HttpGet("{hotelId}/AverageScores")]
+        public IActionResult GetAverageScores(int hotelId)
         {
-            return sortBy switch
+            try
             {
-                "oldest" => query.OrderBy(c => c.CreatedAt),
-                "highestScore" => query.OrderByDescending(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                                              r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
-                "lowestScore" => query.OrderBy(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore +
-                                                                                  r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
-                _ => query.OrderByDescending(c => c.CreatedAt) // 預設按最新評論排序
-            };
+                var ratingScores = _context.Comments
+                                           .Where(c => c.HotelId == hotelId)
+                                           .SelectMany(c => c.RatingScores)
+                                           .ToList();
+
+                var averageScores = new
+                {
+                    ComfortScore = ratingScores.Any() ? ratingScores.Average(r => r.ComfortScore) : 0,
+                    CleanlinessScore = ratingScores.Any() ? ratingScores.Average(r => r.CleanlinessScore) : 0,
+                    StaffScore = ratingScores.Any() ? ratingScores.Average(r => r.StaffScore) : 0,
+                    FacilitiesScore = ratingScores.Any() ? ratingScores.Average(r => r.FacilitiesScore) : 0,
+                    ValueScore = ratingScores.Any() ? ratingScores.Average(r => r.ValueScore) : 0,
+                    LocationScore = ratingScores.Any() ? ratingScores.Average(r => r.LocationScore) : 0,
+                    FreeWifiScore = ratingScores.Any() ? ratingScores.Average(r => r.FreeWifiScore) : 0
+                };
+
+                var totalAverageScore = (averageScores.ComfortScore +
+                                         averageScores.CleanlinessScore +
+                                         averageScores.StaffScore +
+                                         averageScores.FacilitiesScore +
+                                         averageScores.ValueScore +
+                                         averageScores.LocationScore +
+                                         averageScores.FreeWifiScore) / 7;
+
+                return Ok(new
+                {
+                    AverageScore = averageScores,
+                    TotalAverageScore = totalAverageScore
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return StatusCode(500, "Internal server error");
+            }
         }
-
-
-
-
-        //------------------------------------------------------------------------------------------------------------
-        //------------------------------------------------------------------------------------------------------------
-
-        // GET: api/<CommentController>
-        //[HttpGet]
-        //public IEnumerable<string> Get()
-        //{
-        //    return new string[] { "value1", "value2" };
-        //}
-
-        // GET api/<CommentController>/5
-        //[HttpGet("{id}")]
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
-
-        //// POST api/<CommentController>
-        //[HttpPost]
-        //public void Post([FromBody] string value)
-        //{
-        //}
-
-        //// PUT api/<CommentController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
-
-        //// DELETE api/<CommentController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
     }
 }
