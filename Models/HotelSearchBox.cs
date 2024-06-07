@@ -27,6 +27,8 @@ public partial class HotelSearchBox
 
     public int MemberId { get; set; }
 
+    public string CityName { get; set; }
+
     public string CommentTitle { get; set; }
 
     public string CommentText { get; set; }

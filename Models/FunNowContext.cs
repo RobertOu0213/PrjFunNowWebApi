@@ -296,6 +296,9 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
+            entity.Property(e => e.CityName)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
