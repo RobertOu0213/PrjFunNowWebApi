@@ -23,6 +23,8 @@ public partial class FunNowContext : DbContext
 
     public virtual DbSet<CommentTravelerType> CommentTravelerTypes { get; set; }
 
+    public virtual DbSet<CommentWithInfo> CommentWithInfos { get; set; }
+
     public virtual DbSet<Country> Countries { get; set; }
 
     public virtual DbSet<Coupon> Coupons { get; set; }
@@ -81,7 +83,7 @@ public partial class FunNowContext : DbContext
 
 //    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=FunNow5;Integrated Security=True");
+//        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=FunNow5;Integrated Security=True;Multiple Active Result Sets=True;Encrypt=True;Application Name=EntityFramework");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -140,6 +142,25 @@ public partial class FunNowContext : DbContext
                 .HasForeignKey(d => d.TravelerTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CommentTravelerType_TravelerTypes");
+        });
+
+        modelBuilder.Entity<CommentWithInfo>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("CommentWithInfo");
+
+            entity.Property(e => e.CommentId).HasColumnName("CommentID");
+            entity.Property(e => e.CommentText).IsRequired();
+            entity.Property(e => e.CommentTitle).IsRequired();
+            entity.Property(e => e.CreatedAt).HasColumnType("datetime");
+            entity.Property(e => e.FirstName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.RoomTypeName).IsRequired();
+            entity.Property(e => e.TravelerType)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Country>(entity =>
@@ -286,9 +307,6 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
-            entity.Property(e => e.CityName)
-                .IsRequired()
-                .HasMaxLength(50);
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
@@ -368,8 +386,7 @@ public partial class FunNowContext : DbContext
                 .HasMaxLength(255);
             entity.Property(e => e.Phone)
                 .IsRequired()
-                .HasMaxLength(50)
-                .HasDefaultValueSql("(N'尚未設定手機號碼')");
+                .HasMaxLength(50);
             entity.Property(e => e.RoleId)
                 .HasDefaultValue(1)
                 .HasColumnName("RoleID");

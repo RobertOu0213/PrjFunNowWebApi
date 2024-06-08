@@ -74,8 +74,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
 // 使用 CORS 中間件
-app.UseCors("AllowSpecificOrigin");
+///app.UseCors("AllowSpecificOrigin");
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())
@@ -99,7 +100,7 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}");
+    pattern: "{controller=Comment}/{action=Index}/{id?}");
 
 // 配置 SignalR 端點
 app.MapHub<ChatHub>("/chatHub");

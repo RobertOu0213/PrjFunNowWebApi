@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.joannaDTO;
+using System.ComponentModel.Design;
 using System.Reflection.Metadata.Ecma335;
 using static PrjFunNowWebApi.Models.joannaDTO.CommentResponseDTO;
 
@@ -28,14 +29,17 @@ namespace PrjFunNowWebApi.Controllers
         //}
         //從資料庫取評論
         [HttpGet("{hotelId}/GetComments")]
-        public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null)
+        public  IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null)
         {
             try
             {
+                
                 var commentsQuery = _context.Comments
                                             .Where(c => c.HotelId == hotelId)
                                             .Include(c => c.RatingScores)
                                             .AsQueryable();
+
+               
 
                 if (!string.IsNullOrEmpty(search))
                 {
@@ -74,6 +78,17 @@ namespace PrjFunNowWebApi.Controllers
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
+                var memberName =  _context.Comments                                     
+                                         .Select(c => new
+                                         {
+                                             c.CommentId,
+                                             c.CreatedAt,
+                                             MemberName = _context.Members
+                                        .Where(m => m.MemberId == c.MemberId)
+                                        .Select(m => m.FirstName)
+                                        .FirstOrDefault()
+                                         })
+                    .FirstOrDefaultAsync();
 
                 return Ok(new
                 {
@@ -152,6 +167,7 @@ namespace PrjFunNowWebApi.Controllers
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(string dateFilter)
         {
+            var commentMemberInfo = _context.CommentWithInfos.ToArray();
             var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), dateFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
@@ -268,6 +284,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             try
             {
+                
                 var ratingScores = _context.Comments
                                            .Where(c => c.HotelId == hotelId)
                                            .SelectMany(c => c.RatingScores)

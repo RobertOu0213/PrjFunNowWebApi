@@ -63,7 +63,7 @@ namespace PrjFunNowWebApi.Controllers
                                   Longitude = h.Longitude,
                                   IsActive = h.IsActive,
                                   MemberId = h.MemberId,
-                                  CityName = h.City.CityName,
+                                  //CityName = h.City.CityName,
                                   CountryName = h.City.Country.CountryName,
                                   HotelEquipmentName = h.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).FirstOrDefault(), // 假设 HotelEquipmentReferences 是一个包含设备名称的集合
                                   HotelImage = h.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(), // 假设 HotelImages 是一个包含图片URL的集合
