@@ -9,15 +9,13 @@ public partial class CommentWithInfo
 {
     public int CommentId { get; set; }
 
-    public string CommentTitle { get; set; }
-
-    public string CommentText { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-
     public string FirstName { get; set; }
 
     public string TravelerType { get; set; }
 
     public string RoomTypeName { get; set; }
+
+    public int RoomId { get; set; }
+
+    public int HotelId { get; set; }
 }

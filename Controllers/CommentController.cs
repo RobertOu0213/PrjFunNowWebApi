@@ -21,41 +21,77 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
-        //[HttpGet("GetComment")]
-        //public async Task<ActionResult<IEnumerable<Comment>>> GetComments()
-        //{
-        //    var comments = await _context.Comments.ToListAsync();
-        //    return Ok(comments);
-        //}
+       
         //從資料庫取評論
         [HttpGet("{hotelId}/GetComments")]
-        public  IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null)
+        public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null, string sortBy = null, string topics = null)
         {
             try
             {
-                
-                var commentsQuery = _context.Comments
-                                            .Where(c => c.HotelId == hotelId)
-                                            .Include(c => c.RatingScores)
-                                            .AsQueryable();
-
-               
+                // 基本查询并包含 RatingScores 表
+                IQueryable<Comment> commentsQuery = _context.Comments
+                                                             .Where(c => c.HotelId == hotelId)
+                                                             .Include(c => c.RatingScores);
 
                 if (!string.IsNullOrEmpty(search))
                 {
                     commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
                 }
 
+                if (ratingFilter.HasValue)
+                {
+                    commentsQuery = ApplyRatingFilter(commentsQuery, ratingFilter.Value);
+                }
+
+                if (!string.IsNullOrEmpty(dateFilter))
+                {
+                    commentsQuery = ApplyDateFilter(commentsQuery, dateFilter);
+                }
+
+                if (!string.IsNullOrEmpty(topics))
+                {
+                    var topicList = topics.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    commentsQuery = commentsQuery.Where(c => topicList.Any(t => c.CommentText.Contains(t)));
+                }
+
+                if (!string.IsNullOrEmpty(sortBy))
+                {
+                    commentsQuery = sortBy switch
+                    {
+                        "newest" => commentsQuery.OrderByDescending(c => c.CreatedAt),
+                        "oldest" => commentsQuery.OrderBy(c => c.CreatedAt),
+                        "highest" => commentsQuery.OrderByDescending(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
+                        "lowest" => commentsQuery.OrderBy(c => c.RatingScores.Average(r => (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7)),
+                        _ => commentsQuery
+                    };
+                }
+
+                // 计算总数
                 var totalItems = commentsQuery.Count();
 
-                var comments = commentsQuery
-                    .OrderBy(c => c.CreatedAt)
+                // 分页后的评论数据
+                var pagedComments = commentsQuery
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
+                    .ToList();
+
+                var commentIds = pagedComments.Select(c => c.CommentId).ToList();
+
+                // 使用分页后的评论ID列表查询 memberInfo
+                var memberInfo = _context.CommentWithInfos
+                    .Where(ci => commentIds.Contains(ci.CommentId))
+                    .Select(ci => new
+                    {
+                        ci.CommentId,
+                        ci.FirstName,
+                        ci.TravelerType,
+                        ci.RoomTypeName
+                    }).ToList();
+
+                var comments = pagedComments
                     .Select(c => new CommentResponse
                     {
                         CommentId = c.CommentId,
-                        HotelId = c.HotelId,
                         CommentTitle = c.CommentTitle,
                         CommentText = c.CommentText,
                         CreatedAt = c.CreatedAt,
@@ -78,28 +114,24 @@ namespace PrjFunNowWebApi.Controllers
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
-                var memberName =  _context.Comments                                     
-                                         .Select(c => new
-                                         {
-                                             c.CommentId,
-                                             c.CreatedAt,
-                                             MemberName = _context.Members
-                                        .Where(m => m.MemberId == c.MemberId)
-                                        .Select(m => m.FirstName)
-                                        .FirstOrDefault()
-                                         })
-                    .FirstOrDefaultAsync();
+
+                if (hotelName == null)
+                {
+                    return NotFound($"Hotel with ID {hotelId} not found.");
+                }
 
                 return Ok(new
                 {
                     TotalItems = totalItems,
                     Comments = comments,
-                    HotelName = hotelName
+                    HotelName = hotelName,
+                    MemberInfo = memberInfo
                 });
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"Error: {ex.Message}");
+                Console.WriteLine($"Stack Trace: {ex.StackTrace}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -110,6 +142,7 @@ namespace PrjFunNowWebApi.Controllers
         [HttpGet("commentCounts")]
         public async Task<IActionResult> GetCommentCounts()
         {
+           
             // 计算评分评论数量和详细信息
             var ratingCommentDetails = new Dictionary<int, object>
     {
@@ -135,7 +168,7 @@ namespace PrjFunNowWebApi.Controllers
 
             var total = await _context.Comments.CountAsync();
 
-            return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails });
+            return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails});
         }
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int ratingFilter)
@@ -143,11 +176,7 @@ namespace PrjFunNowWebApi.Controllers
             var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), ratingFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
-                                   CommentId = c.CommentId,
-                                   HotelId = c.HotelId,
-                                   CommentTitle = c.CommentTitle,
-                                   CommentText = c.CommentText,
-                                   CreatedAt = c.CreatedAt,
+                                   
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
@@ -167,15 +196,11 @@ namespace PrjFunNowWebApi.Controllers
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(string dateFilter)
         {
-            var commentMemberInfo = _context.CommentWithInfos.ToArray();
+            
             var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), dateFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
-                                   CommentId = c.CommentId,
-                                   HotelId = c.HotelId,
-                                   CommentTitle = c.CommentTitle,
-                                   CommentText = c.CommentText,
-                                   CreatedAt = c.CreatedAt,
+                                   
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
@@ -277,7 +302,6 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-
         //計算評分平均
         [HttpGet("{hotelId}/AverageScores")]
         public IActionResult GetAverageScores(int hotelId)
@@ -309,8 +333,11 @@ namespace PrjFunNowWebApi.Controllers
                                          averageScores.LocationScore +
                                          averageScores.FreeWifiScore) / 7;
 
+                
+
                 return Ok(new
                 {
+                   
                     AverageScore = averageScores,
                     TotalAverageScore = totalAverageScore
                 });
