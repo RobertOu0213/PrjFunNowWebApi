@@ -131,7 +131,7 @@ namespace PrjFunNowWebApi.Controllers
                     CountryName = x.Hotel.City.Country.CountryName,
                     HotelEquipmentName = x.Hotel.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).FirstOrDefault(),
                     HotelImage = x.Hotel.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(),
-                    HotelPrice = x.Hotel.Rooms.Average(p => p.RoomPrice),
+                    HotelPrice = (int)Math.Round(x.Hotel.Rooms.Average(p => p.RoomPrice)), // 將平均值轉換為整數
                 });
 
             // 根據關鍵字篩選旅館
