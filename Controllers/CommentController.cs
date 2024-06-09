@@ -114,6 +114,7 @@ namespace PrjFunNowWebApi.Controllers
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
+                
 
                 if (hotelName == null)
                 {
@@ -348,5 +349,56 @@ namespace PrjFunNowWebApi.Controllers
                 return StatusCode(500, "Internal server error");
             }
         }
+
+        
+        [HttpPost("filter")]
+        public async Task<IActionResult> GetReportReviews()
+        {
+            var query = _context.ReportReviews
+            .Include(r => r.Member) // Include Member details
+            .AsQueryable();
+
+           
+
+
+            var results = await query.Select(r => new
+            {
+                r.ReportId,
+                r.CommentId,
+                r.MemberId,
+                r.ReportTitleId,
+                r.ReportSubtitleId,
+                r.ReportedAt,
+                r.ReportReason,
+                r.ReviewStatus,
+                r.ReviewedBy,
+                r.ReviewedAt,
+                MemberName = r.Member.FirstName,
+                MemberEmail = r.Member.Email,
+                MemberPhone = r.Member.Phone
+            }).ToListAsync();
+
+            return Ok(results);
+        }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
