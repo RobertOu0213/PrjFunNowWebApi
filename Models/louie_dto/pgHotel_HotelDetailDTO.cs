@@ -17,5 +17,6 @@ namespace PrjFunNowWebApi.Models.louie_dto
         public List<string>? HotelEquipments { get; set; }
         public List<pgHotel_ImageDTO>? HotelImages { get; set; }
         public List<pgHotel_RoomDTO>? Rooms { get; set; }
+        public decimal AverageRoomPrice { get; set; }
     }
 }

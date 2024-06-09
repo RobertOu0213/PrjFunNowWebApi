@@ -75,7 +75,8 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                         ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
                     }).ToList()
 
-                }).ToList()
+                }).ToList(),
+                AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice)
             };
 
             return Ok(hotelDetail);
