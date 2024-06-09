@@ -91,15 +91,27 @@ namespace PrjFunNowWebApi.Controllers
                 .Select(k => k.RoomId)
                 .ToList();
 
-            // 查詢尚有空房且可容納所需人數的旅館
-            var hotelsQuery = _context.Hotels
+            // 查詢所有旅館
+            var hotels = _context.Hotels
+                .Include(h => h.Rooms)
+                .Include(h => h.City)
+                .ThenInclude(c => c.Country)
+                .Include(h => h.HotelEquipmentReferences)
+                .ThenInclude(r => r.HotelEquipment)
+                .Include(h => h.HotelImages)
+                .ToList(); // 先在用戶端載入所有旅館資料
+
+            // 篩選符合條件的旅館
+            var hotelsQuery = hotels
+                .AsEnumerable() // 強制在用戶端進行計算
                 .Select(h => new
                 {
                     Hotel = h,
-                    TopRooms = h.Rooms            //這邊還要思考一下
-                        .Where(r => !orders.Contains(r.RoomId) && r.MaximumOccupancy >= (totalPeople/ indexhotelSearchDTO.roomnum))
-                        .OrderByDescending(r => r.MaximumOccupancy)
-                        .Take(indexhotelSearchDTO.roomnum)
+                    TopRooms = h.Rooms
+                        .Where(r => !orders.Contains(r.RoomId))
+                        .GroupBy(r => r.HotelId)
+                        .Where(g => g.Count() >= indexhotelSearchDTO.roomnum)
+                        .SelectMany(g => g.OrderByDescending(r => r.MaximumOccupancy).Take(indexhotelSearchDTO.roomnum))
                         .ToList()
                 })
                 .Where(x => x.TopRooms.Count == indexhotelSearchDTO.roomnum && x.TopRooms.Sum(r => r.MaximumOccupancy) >= totalPeople)
@@ -119,7 +131,7 @@ namespace PrjFunNowWebApi.Controllers
                     CountryName = x.Hotel.City.Country.CountryName,
                     HotelEquipmentName = x.Hotel.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).FirstOrDefault(),
                     HotelImage = x.Hotel.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(),
-                    //HotelPrice = x.Hotel.Rooms.Average(p => p.RoomPrice),
+                    HotelPrice = x.Hotel.Rooms.Average(p => p.RoomPrice),
                 });
 
             // 根據關鍵字篩選旅館
@@ -129,7 +141,7 @@ namespace PrjFunNowWebApi.Controllers
             }
 
             // 執行查詢並將結果轉換為 HotelSearchBox
-            var hotelList = await hotelsQuery.ToListAsync();
+            var hotelList = hotelsQuery.ToList();
             return Ok(hotelList);
 
         }
