@@ -94,6 +94,13 @@ namespace PrjFunNowWebApi.Controllers
                 hotelsQuery = hotelsQuery.Where(s => s.HotelName.Contains(indexhotelSearchDTO.keyword) || s.HotelDescription.Contains(indexhotelSearchDTO.keyword));
             }
 
+            // 根據價格範圍篩選旅館
+            if (indexhotelSearchDTO.lowerPrice.HasValue && indexhotelSearchDTO.upperPrice.HasValue)
+            {
+                hotelsQuery = hotelsQuery.Where(h => h.HotelPrice >= indexhotelSearchDTO.lowerPrice.Value && h.HotelPrice <= indexhotelSearchDTO.upperPrice.Value);
+            }
+
+
             //排序
             switch (indexhotelSearchDTO.sortBy)
             {

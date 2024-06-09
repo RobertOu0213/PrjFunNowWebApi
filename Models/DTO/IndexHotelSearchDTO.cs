@@ -10,6 +10,8 @@
         public int roomnum { get; set; }  //客戶訂房數
         public string? sortBy { get; set; }
         public string? sortType { get; set; } = "asc";
+        public int? lowerPrice { get; set; } = 1;
+        public int? upperPrice { get; set; } = 50000;
 
     }
 }
