@@ -94,6 +94,24 @@ namespace PrjFunNowWebApi.Controllers
                 hotelsQuery = hotelsQuery.Where(s => s.HotelName.Contains(indexhotelSearchDTO.keyword) || s.HotelDescription.Contains(indexhotelSearchDTO.keyword));
             }
 
+            //排序
+            switch (indexhotelSearchDTO.sortBy)
+            {
+                case "LevelStar":
+                    hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.LevelStar) : hotelsQuery.OrderByDescending(s => s.LevelStar);
+                    break;
+                case "HotelPrice":
+                    hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelPrice) : hotelsQuery.OrderByDescending(s => s.HotelPrice);
+                    break;
+                case "CityName":
+                    hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.CityName) : hotelsQuery.OrderByDescending(s => s.CityName);
+                    break;
+                default:
+                    hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelId) : hotelsQuery.OrderByDescending(s => s.HotelId);
+                    break;
+            }
+
+
             // 執行查詢並將結果轉換為 HotelSearchBox
             var hotelList = hotelsQuery.ToList();
             return Ok(hotelList);
