@@ -43,12 +43,27 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return NotFound();
             }
 
+            var similarHotels = await _context.Hotels
+                .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id) // 根据 CityId 进行比对
+                .Take(9)
+                .Select(h => new pgHotel_SimilarHotelsDTO
+                {
+                    HotelId = h.HotelId,
+                    HotelName = h.HotelName,
+                    HotelAddress = h.HotelAddress,
+                    LevelStar = (int)h.LevelStar,
+                    AverageRoomPrice = h.Rooms.Average(r => r.RoomPrice),
+                    AvailableRooms = h.Rooms.Count()
+                })
+                .ToListAsync();
+
             var hotelDetail = new pgHotel_HotelDetailDTO
             {
                 HotelName = hotel.HotelName,
                 HotelAddress = hotel.HotelAddress,
                 HotelDescription = hotel.HotelDescription,
                 CityName = hotel.City.CityName,
+                CityId = hotel.City.CityId, // 设置 CityId 属性=> 用來推薦你可能喜歡
                 CountryName = hotel.City.Country.CountryName,
                 LevelStar = hotel.LevelStar,
                 Latitude = hotel.Latitude,
@@ -76,7 +91,8 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     }).ToList()
 
                 }).ToList(),
-                AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice)
+                AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
+                SimilarHotels = similarHotels // 添加相似酒店
             };
 
             return Ok(hotelDetail);
