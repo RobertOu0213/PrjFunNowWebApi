@@ -16,12 +16,12 @@ namespace PrjFunNowWebApi.Controllers
     {
         private readonly FunNowContext _context;
 
-        public CommentController(FunNowContext context) 
+        public CommentController(FunNowContext context)
         {
             _context = context;
         }
 
-       
+
         //從資料庫取評論
         [HttpGet("{hotelId}/GetComments")]
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null, string sortBy = null, string topics = null)
@@ -114,7 +114,7 @@ namespace PrjFunNowWebApi.Controllers
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
-                
+
 
                 if (hotelName == null)
                 {
@@ -143,7 +143,7 @@ namespace PrjFunNowWebApi.Controllers
         [HttpGet("commentCounts")]
         public async Task<IActionResult> GetCommentCounts()
         {
-           
+
             // 计算评分评论数量和详细信息
             var ratingCommentDetails = new Dictionary<int, object>
     {
@@ -169,7 +169,7 @@ namespace PrjFunNowWebApi.Controllers
 
             var total = await _context.Comments.CountAsync();
 
-            return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails});
+            return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails });
         }
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int ratingFilter)
@@ -177,7 +177,7 @@ namespace PrjFunNowWebApi.Controllers
             var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), ratingFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
-                                   
+
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
@@ -197,11 +197,11 @@ namespace PrjFunNowWebApi.Controllers
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(string dateFilter)
         {
-            
+
             var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), dateFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
-                                   
+
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
@@ -309,7 +309,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             try
             {
-                
+
                 var ratingScores = _context.Comments
                                            .Where(c => c.HotelId == hotelId)
                                            .SelectMany(c => c.RatingScores)
@@ -334,11 +334,11 @@ namespace PrjFunNowWebApi.Controllers
                                          averageScores.LocationScore +
                                          averageScores.FreeWifiScore) / 7;
 
-                
+
 
                 return Ok(new
                 {
-                   
+
                     AverageScore = averageScores,
                     TotalAverageScore = totalAverageScore
                 });
@@ -350,7 +350,7 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
-        
+
         [HttpPost("filter")]
         public async Task<IActionResult> GetReportReviews()
         {
@@ -358,7 +358,7 @@ namespace PrjFunNowWebApi.Controllers
             .Include(r => r.Member) // Include Member details
             .AsQueryable();
 
-           
+
 
 
             var results = await query.Select(r => new
@@ -418,17 +418,47 @@ namespace PrjFunNowWebApi.Controllers
             public int Status { get; set; }
         }
 
+        [HttpPost]
+        public async Task<IActionResult> SubmitReportReview([FromBody] ReportReviewDto dto)
+        {
+            var reportReview = new ReportReview
+            {
+                CommentId = dto.CommentID,
+                MemberId = dto.MemberID,
+                ReportTitleId = dto.ReportTitleID,
+                ReportSubtitleId = dto.ReportSubtitleID,
+                ReportedAt = dto.ReportedAt,
+                ReportReason = dto.ReportReason,
+                ReviewStatus = dto.ReviewStatus
+            };
 
+            _context.ReportReviews.Add(reportReview);
+            await _context.SaveChangesAsync();
 
-
-
-
-
-
-
+            return Ok(new { message = "Report submitted successfully" });
+        }
 
     }
+    public class ReportReviewDto
+    {
+        public int CommentID { get; set; }
+        public int MemberID { get; set; }
+        public int ReportTitleID { get; set; }
+        public int ReportSubtitleID { get; set; }
+        public DateTime ReportedAt { get; set; }
+        public string ReportReason { get; set; }
+        public string ReviewStatus { get; set; }
+    }
+
+
+
+
+
+
+
+
 }
+
 
 
 
