@@ -380,6 +380,53 @@ namespace PrjFunNowWebApi.Controllers
 
             return Ok(results);
         }
+
+
+        [HttpPut("UpdateCommentStatus")]
+        public IActionResult UpdateCommentAndReportStatus([FromBody] UpdateCommentAndReportStatusRequest request)
+        {
+            var comment = _context.Comments.FirstOrDefault(c => c.CommentId == request.CommentId);
+            if (comment == null)
+            {
+                return NotFound();
+            }
+
+            comment.CommentStatus = request.Status.ToString();
+            comment.UpdatedAt = DateTime.Now;
+
+            var report = _context.ReportReviews.FirstOrDefault(r => r.ReportId == request.ReportId);
+            if (report == null)
+            {
+                return NotFound();
+            }
+
+            report.ReviewStatus = request.Status.ToString();
+            report.ReviewedAt = DateTime.Now;
+
+            _context.SaveChanges();
+
+            // Reload the updated report to ensure it's the latest state
+            var updatedReport = _context.ReportReviews.FirstOrDefault(r => r.ReportId == request.ReportId);
+
+            return Ok(updatedReport);
+        }
+
+        public class UpdateCommentAndReportStatusRequest
+        {
+            public int CommentId { get; set; }
+            public int ReportId { get; set; }
+            public int Status { get; set; }
+        }
+
+
+
+
+
+
+
+
+
+
     }
 }
 
