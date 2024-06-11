@@ -16,9 +16,11 @@ namespace PrjFunNowWebApi.Controllers
     public class CommentController : ControllerBase
     {
         private readonly FunNowContext _context;
+        private readonly ILogger<CommentController> _logger;
 
-        public CommentController(FunNowContext context)
+        public CommentController(ILogger<CommentController> logger,FunNowContext context)
         {
+            _logger = logger;
             _context = context;
         }
 
@@ -32,7 +34,8 @@ namespace PrjFunNowWebApi.Controllers
                 // 基本查询并包含 RatingScores 表
                 IQueryable<Comment> commentsQuery = _context.Comments
                                                              .Where(c => c.HotelId == hotelId)
-                                                             .Include(c => c.RatingScores);
+                                                             .Include(c => c.RatingScores)
+                                                             .Include(c => c.Member);
 
                 if (!string.IsNullOrEmpty(search))
                 {
@@ -108,14 +111,22 @@ namespace PrjFunNowWebApi.Controllers
                             LocationScore = r.LocationScore,
                             FreeWifiScore = r.FreeWifiScore,
                             TravelerType = r.TravelerType
-                        }).ToList()
+                        }).ToList(),
+                        MemberId = c.MemberId, // 添加 MemberId 字段
+                        MemberName = c.Member.FirstName, // 添加 MemberName 字段
+                        MemberEmail = c.Member.Email // 添加 MemberEmail 字段
                     }).ToList();
+           
 
                 var hotelName = _context.Hotels
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
 
+                var memberId = _context.Comments
+                                        .Where(h => h.HotelId == hotelId)
+                                        .Select(h => h.MemberId)
+                                        .FirstOrDefault();
 
                 if (hotelName == null)
                 {
@@ -127,7 +138,8 @@ namespace PrjFunNowWebApi.Controllers
                     TotalItems = totalItems,
                     Comments = comments,
                     HotelName = hotelName,
-                    MemberInfo = memberInfo
+                    MemberInfo = memberInfo,
+                    
                 });
             }
             catch (Exception ex)
@@ -390,32 +402,47 @@ namespace PrjFunNowWebApi.Controllers
 
 
         [HttpPut("UpdateCommentStatus")]
-        public IActionResult UpdateCommentAndReportStatus([FromBody] UpdateCommentAndReportStatusRequest request)
+        public async Task<IActionResult> UpdateCommentAndReportStatus([FromBody] UpdateCommentAndReportStatusRequest request)
         {
-            var comment = _context.Comments.FirstOrDefault(c => c.CommentId == request.CommentId);
-            if (comment == null)
+            try
             {
-                return NotFound();
+                if (request == null || request.CommentId <= 0 || request.ReportId <= 0 || request.Status <= 0)
+                {
+                    return BadRequest("Invalid request data");
+                }
+
+                var comment = await _context.Comments.FirstOrDefaultAsync(c => c.CommentId == request.CommentId);
+                if (comment == null)
+                {
+                    return NotFound($"Comment with ID {request.CommentId} not found");
+                }
+
+                comment.CommentStatus = request.Status.ToString(); // 确保类型转换为字符串
+                comment.UpdatedAt = DateTime.Now;
+
+                var report = await _context.ReportReviews.FirstOrDefaultAsync(r => r.ReportId == request.ReportId);
+                if (report == null)
+                {
+                    return NotFound($"Report with ID {request.ReportId} not found");
+                }
+
+                report.ReviewStatus = request.Status.ToString(); // 确保类型转换为字符串
+                report.ReviewedAt = DateTime.Now;
+
+                await _context.SaveChangesAsync();
+
+                // 重新加载更新后的报告以确保是最新状态
+                var updatedReport = await _context.ReportReviews.FirstOrDefaultAsync(r => r.ReportId == request.ReportId);
+
+                // 返回更新后的报告
+                return Ok(updatedReport);
             }
-
-            comment.CommentStatus = request.Status.ToString();
-            comment.UpdatedAt = DateTime.Now;
-
-            var report = _context.ReportReviews.FirstOrDefault(r => r.ReportId == request.ReportId);
-            if (report == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Error updating comment and report status for request: {@Request}", request);
+                // 记录详细的异常信息
+                return StatusCode(500, "Internal server error");
             }
-
-            report.ReviewStatus = request.Status.ToString();
-            report.ReviewedAt = DateTime.Now;
-
-            _context.SaveChanges();
-
-            // Reload the updated report to ensure it's the latest state
-            var updatedReport = _context.ReportReviews.FirstOrDefault(r => r.ReportId == request.ReportId);
-
-            return Ok(updatedReport);
         }
 
         public class UpdateCommentAndReportStatusRequest
@@ -424,6 +451,10 @@ namespace PrjFunNowWebApi.Controllers
             public int ReportId { get; set; }
             public int Status { get; set; }
         }
+
+
+
+
 
         [HttpPost("SubmitReportReview")]
         public async Task<IActionResult> SubmitReportReview([FromBody] ReportReviewDto dto)
@@ -448,8 +479,8 @@ namespace PrjFunNowWebApi.Controllers
                 ReportedAt = reportedAt,
                 ReportReason = dto.ReportReason,
                 ReviewStatus = dto.ReviewStatus,
-                ReviewedBy = 0, // 默认值
-                ReviewedAt = DateTime.MinValue // 默认值
+                ReviewedBy = null, // 可空类型
+                ReviewedAt = null // 可空类型
             };
 
             _context.ReportReviews.Add(reportReview);
