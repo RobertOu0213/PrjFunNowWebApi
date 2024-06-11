@@ -27,8 +27,6 @@ public partial class HotelSearchBox
 
     public int MemberId { get; set; }
 
-    public string CityName { get; set; }
-
     public string CommentTitle { get; set; }
 
     public string CommentText { get; set; }
@@ -42,4 +40,6 @@ public partial class HotelSearchBox
     public decimal? HotelPrice { get; set; }
 
     public int? HotelMaximumOccupancy { get; set; }
+
+    public string CityName { get; set; }
 }

@@ -135,6 +135,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "[dbo].[CommentWithInfo]",
+         "ObjectType": 3
+      },
+      {
          "Name": "[dbo].[HotelSearchBox]",
          "ObjectType": 3
       }

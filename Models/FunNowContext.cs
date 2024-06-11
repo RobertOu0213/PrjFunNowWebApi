@@ -23,6 +23,8 @@ public partial class FunNowContext : DbContext
 
     public virtual DbSet<CommentTravelerType> CommentTravelerTypes { get; set; }
 
+    public virtual DbSet<CommentWithInfo> CommentWithInfos { get; set; }
+
     public virtual DbSet<Country> Countries { get; set; }
 
     public virtual DbSet<Coupon> Coupons { get; set; }
@@ -90,7 +92,9 @@ public partial class FunNowContext : DbContext
             entity.ToTable("City");
 
             entity.Property(e => e.CityId).HasColumnName("CityID");
-            entity.Property(e => e.CityName).IsRequired();
+            entity.Property(e => e.CityName)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.CountryId).HasColumnName("CountryID");
 
             entity.HasOne(d => d.Country).WithMany(p => p.Cities)
@@ -110,6 +114,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.RoomId).HasColumnName("RoomID");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Comments)
@@ -140,6 +145,24 @@ public partial class FunNowContext : DbContext
                 .HasForeignKey(d => d.TravelerTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CommentTravelerType_TravelerTypes");
+        });
+
+        modelBuilder.Entity<CommentWithInfo>(entity =>
+        {
+            entity
+                .HasNoKey()
+                .ToView("CommentWithInfo");
+
+            entity.Property(e => e.CommentId).HasColumnName("CommentID");
+            entity.Property(e => e.FirstName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.HotelId).HasColumnName("HotelID");
+            entity.Property(e => e.RoomId).HasColumnName("RoomID");
+            entity.Property(e => e.RoomTypeName).IsRequired();
+            entity.Property(e => e.TravelerType)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Country>(entity =>
@@ -188,10 +211,16 @@ public partial class FunNowContext : DbContext
 
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.CityId).HasColumnName("CityID");
-            entity.Property(e => e.HotelAddress).IsRequired();
+            entity.Property(e => e.HotelAddress)
+                .IsRequired()
+                .HasMaxLength(150);
             entity.Property(e => e.HotelDescription).IsRequired();
-            entity.Property(e => e.HotelName).IsRequired();
-            entity.Property(e => e.HotelPhone).IsRequired();
+            entity.Property(e => e.HotelName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.HotelPhone)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.HotelTypeId).HasColumnName("HotelTypeID");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(false)
@@ -221,7 +250,9 @@ public partial class FunNowContext : DbContext
             entity.ToTable("HotelEquipment");
 
             entity.Property(e => e.HotelEquipmentId).HasColumnName("HotelEquipmentID");
-            entity.Property(e => e.HotelEquipmentName).IsRequired();
+            entity.Property(e => e.HotelEquipmentName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<HotelEquipmentReference>(entity =>
@@ -286,9 +317,6 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
-            entity.Property(e => e.CityName)
-                .IsRequired()
-                .HasMaxLength(50);
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
@@ -339,6 +367,7 @@ public partial class FunNowContext : DbContext
 
             entity.HasOne(d => d.HotelImage).WithMany(p => p.ImageCategoryReferences)
                 .HasForeignKey(d => d.HotelImageId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ImageCategory_Reference_HotelImage");
 
             entity.HasOne(d => d.ImageCategory).WithMany(p => p.ImageCategoryReferences)
@@ -368,8 +397,7 @@ public partial class FunNowContext : DbContext
                 .HasMaxLength(255);
             entity.Property(e => e.Phone)
                 .IsRequired()
-                .HasMaxLength(50)
-                .HasDefaultValueSql("(N'尚未設定手機號碼')");
+                .HasMaxLength(50);
             entity.Property(e => e.RoleId)
                 .HasDefaultValue(1)
                 .HasColumnName("RoleID");
