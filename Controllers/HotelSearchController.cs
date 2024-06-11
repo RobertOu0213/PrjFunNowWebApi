@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 
@@ -17,19 +18,6 @@ namespace PrjFunNowWebApi.Controllers
         {
             _context = context;
         }
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetSpots()
-        {
-            return await _context.HotelSearchBoxes.ToListAsync();
-        }
-        [HttpGet]
-        [Route("search")]
-        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetSpots1(string keyword)
-        {
-            return await _context.HotelSearchBoxes.Where(s => s.HotelName.Contains(keyword)).ToListAsync();
-        }
-
-
         [HttpPost]
         [Route("indexsearch")]
         public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
@@ -126,59 +114,105 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-
-        [HttpPost]
-        public async Task<ActionResult<HotelsPagingDTO>> GetHotelsBySearch(HotelSearchDTO hotelSearchDTO)
+        //checkbox新方法
+        [HttpPost("advancedsearch")]
+        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByAdvancedSearch([FromBody] IndexHotelSearchDTO request)
         {
+            // 添加日誌來檢查接收到的請求資料
+            Console.WriteLine("Received request: " + JsonConvert.SerializeObject(request));
 
-            //根據Hotel分類編號搜尋Hotel分類資料 //未修正
-            var Hotels = hotelSearchDTO.HotelId == 0 ? _context.HotelSearchBoxes : _context.HotelSearchBoxes.Where(s => s.HotelId == hotelSearchDTO.HotelId);
+            var hotelsQuery = _context.Hotels
+                .Include(h => h.Rooms)
+                .Include(h => h.City)
+                    .ThenInclude(c => c.Country)
+                .Include(h => h.HotelEquipmentReferences)
+                    .ThenInclude(r => r.HotelEquipment)
+                .Include(h => h.HotelImages)
+                .AsQueryable();
 
-            //根據關鍵字搜尋景點資料(HotelName、desc) 
-            if (!string.IsNullOrEmpty(hotelSearchDTO.keyword))
+            // 根據新篩選條件篩選
+            if (!string.IsNullOrEmpty(request.keyword))
             {
-                Hotels = Hotels.Where(s => s.HotelName.Contains(hotelSearchDTO.keyword) || s.HotelDescription.Contains(hotelSearchDTO.keyword));
+                hotelsQuery = hotelsQuery.Where(h => h.HotelName.Contains(request.keyword) || h.HotelDescription.Contains(request.keyword));
             }
 
-            ////排序
-            //switch (hotelSearchDTO.sortBy)
+            if (request.lowerPrice.HasValue)
+            {
+                hotelsQuery = hotelsQuery.Where(h => h.Rooms.Any(r => r.RoomPrice >= request.lowerPrice));
+            }
+
+            if (request.upperPrice.HasValue)
+            {
+                hotelsQuery = hotelsQuery.Where(h => h.Rooms.Any(r => r.RoomPrice <= request.upperPrice));
+            }
+
+            if (request.HotelTypes != null && request.HotelTypes.Any())
+            {
+                hotelsQuery = hotelsQuery.Where(h => request.HotelTypes.Contains(h.HotelTypeId));
+            }
+
+            if (request.HotelEquipments != null && request.HotelEquipments.Any())
+            {
+                hotelsQuery = hotelsQuery.Where(h => h.HotelEquipmentReferences.Any(e => request.HotelEquipments.Contains(e.HotelEquipmentId)));
+            }
+
+            if (request.Cities != null && request.Cities.Any())
+            {
+                hotelsQuery = hotelsQuery.Where(h => request.Cities.Contains(h.City.CityId));
+            }
+
+            //if (request.RoomEquipments != null && request.RoomEquipments.Any())
             //{
-            //    case "HotelName":
-            //        Hotels = hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.HotelName) : Hotels.OrderByDescending(s => s.HotelName);
-            //        break;
-            //    case "HotelId":
-            //        Hotels = hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.HotelId) : Hotels.OrderByDescending(s => s.HotelId);
-            //        break;
-            //    default:
-            //        Hotels = hotelSearchDTO.sortType == "asc" ? Hotels.OrderBy(s => s.LevelStar) : Hotels.OrderByDescending(s => s.LevelStar);
-            //        break;
+            //    hotelsQuery = hotelsQuery.Where(h => h.Rooms.Any(r => request.RoomEquipments.Contains(r.RoomEquipmentId)));
             //}
 
-            //總共有多少筆資料
-            int totalCount = Hotels.Count();
-            ////每頁要顯示幾筆資料
-            //int pageSize = hotelSearchDTO.pageSize ?? 9;   //searchDTO.pageSize ?? 9;
-            ////目前第幾頁
-            //int page = hotelSearchDTO.page ?? 1;
+            // 排序邏輯
+            if (!string.IsNullOrEmpty(request.sortBy))
+            {
+                switch (request.sortBy.ToLower())
+                {
+                    case "hotelid":
+                        hotelsQuery = request.sortType.ToLower() == "asc" ? hotelsQuery.OrderBy(h => h.HotelId) : hotelsQuery.OrderByDescending(h => h.HotelId);
+                        break;
+                    case "levelstar":
+                        hotelsQuery = request.sortType.ToLower() == "asc" ? hotelsQuery.OrderBy(h => h.LevelStar) : hotelsQuery.OrderByDescending(h => h.LevelStar);
+                        break;
+                    case "hotelprice":
+                        hotelsQuery = request.sortType.ToLower() == "asc" ? hotelsQuery.OrderBy(h => h.Rooms.Average(r => r.RoomPrice)) : hotelsQuery.OrderByDescending(h => h.Rooms.Average(r => r.RoomPrice));
+                        break;
+                    case "cityname":
+                        hotelsQuery = request.sortType.ToLower() == "asc" ? hotelsQuery.OrderBy(h => h.City.CityName) : hotelsQuery.OrderByDescending(h => h.City.CityName);
+                        break;
+                    default:
+                        break;
+                }
+            }
 
-            ////計算總共有幾頁
-            //int totalPages = (int)Math.Ceiling((decimal)totalCount / pageSize);
+            // 執行查詢並將結果轉換為 HotelSearchBox
+            var result = await hotelsQuery.Select(h => new HotelSearchBox
+            {
+                HotelId = h.HotelId,
+                HotelName = h.HotelName,
+                HotelAddress = h.HotelAddress,
+                HotelPhone = h.HotelPhone,
+                HotelDescription = h.HotelDescription,
+                LevelStar = h.LevelStar,
+                Latitude = h.Latitude,
+                Longitude = h.Longitude,
+                IsActive = h.IsActive,
+                MemberId = h.MemberId,
+                CityName = h.City.CityName,
+                CountryName = h.City.Country.CountryName,
+                HotelEquipmentName = h.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).FirstOrDefault(),
+                HotelImage = h.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(),
+                HotelPrice = (int)Math.Round(h.Rooms.Average(p => p.RoomPrice)), // 將平均值轉換為整數
+            }).ToListAsync();
 
-            ////分頁
-            //Hotels = Hotels.Skip((page - 1) * pageSize).Take(pageSize);
+            // 添加日誌來檢查返回的酒店數據
+            Console.WriteLine("Returned hotels: " + JsonConvert.SerializeObject(result));
 
-
-            //包裝要傳給client端的資料
-            HotelsPagingDTO hotelsPaging = new HotelsPagingDTO();
-            hotelsPaging.TotalCount = totalCount;
-            //hotelsPaging.TotalPages = totalPages;
-            hotelsPaging.HotelsResult = await Hotels.ToListAsync();
-
-
-            return hotelsPaging;
+            return Ok(result);
         }
-
-
 
     }
 }

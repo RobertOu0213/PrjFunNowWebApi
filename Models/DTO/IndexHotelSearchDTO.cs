@@ -13,5 +13,10 @@
         public int? lowerPrice { get; set; } = 1;
         public int? upperPrice { get; set; } = 50000;
 
+        // 新增篩選條件
+        public List<int>? HotelTypes { get; set; } = null;
+        public List<int>? HotelEquipments { get; set; } = null;
+        public List<int>? Cities { get; set; } = null;
+        public List<int>? RoomEquipments { get; set; } = null;
     }
 }
