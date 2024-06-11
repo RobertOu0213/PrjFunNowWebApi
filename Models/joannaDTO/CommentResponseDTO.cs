@@ -35,5 +35,15 @@
             public decimal LocationScore { get; set; }
             public decimal FreeWifiScore { get; set; }
         }
+        public class ReportReviewFilter
+        {
+            public int? ReportTitleId { get; set; }
+            public int? ReportSubtitleId { get; set; }
+            public DateTime? StartDate { get; set; }
+            public DateTime? EndDate { get; set; }
+            public string SearchText { get; set; }
+            public List<int> ReviewStatuses { get; set; }
+        }
+
     }
 }
