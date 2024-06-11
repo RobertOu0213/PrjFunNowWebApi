@@ -53,7 +53,12 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     HotelAddress = h.HotelAddress,
                     LevelStar = (int)h.LevelStar,
                     AverageRoomPrice = h.Rooms.Average(r => r.RoomPrice),
-                    AvailableRooms = h.Rooms.Count()
+                    AvailableRooms = h.Rooms.Count(),
+                    HotelImage = h.HotelImages.Select(img => new pgHotel_ImageDTO
+                    {
+                        ImageUrl = img.HotelImage1,
+                        ImageCategoryID = img.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
+                    }).FirstOrDefault() // 获取第一张图片
                 })
                 .ToListAsync();
 
