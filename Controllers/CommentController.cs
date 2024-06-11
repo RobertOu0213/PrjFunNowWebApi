@@ -105,18 +105,14 @@ namespace PrjFunNowWebApi.Controllers
         { 6, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 6).CountAsync(), Comments = await GetCommentsByRating(6) } },
     };
 
-            // 计算月份评论数量和详细信息
-            var dateRanges = new[] { "3-5月", "6-8月", "9-11月", "12-2月" };
-            var dateCommentDetails = new Dictionary<string, object>();
-
-            foreach (var range in dateRanges)
-            {
-                dateCommentDetails[range] = new
-                {
-                    Count = await ApplyDateFilter(_context.Comments.AsQueryable(), range).CountAsync(),
-                    Comments = await GetCommentsByDateRange(range)
-                };
-            }
+            // 計算月份評論數量和詳細信息
+            var dateCommentDetails = new Dictionary<string, object>
+    {
+        { "1-3", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "1-3").CountAsync(), Comments = await GetCommentsByDateRange("1-3") } },
+        { "4-6", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "4-6").CountAsync(), Comments = await GetCommentsByDateRange("4-6") } },
+        { "7-9", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "7-9").CountAsync(), Comments = await GetCommentsByDateRange("7-9") } },
+        { "10-12", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "10-12").CountAsync(), Comments = await GetCommentsByDateRange("10-12") } },
+    };
 
             var total = await _context.Comments.CountAsync();
 
@@ -212,39 +208,51 @@ namespace PrjFunNowWebApi.Controllers
             return query;
         }
 
-        private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, string dateFilter)
+        private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, string dateFilter, int? year = null)
         {
-            int monthFilter = GetMonthFilter(dateFilter);
-            if (monthFilter != 0)
+            var (startMonth, endMonth) = GetStartAndEndMonths(dateFilter);
+            if (startMonth != 0 && endMonth != 0)
             {
-                var startDate = GetStartDateForRange(monthFilter);
-                var endDate = startDate.AddMonths(3).AddDays(-1);
+                var (startDate, endDate) = GetStartAndEndDateForRange(startMonth, endMonth, year);
                 query = query.Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate);
             }
             return query;
         }
-
-        private DateTime GetStartDateForRange(int monthFilter)
+        private (int startMonth, int endMonth) GetStartAndEndMonths(string dateFilter)
         {
-            var currentYear = DateTime.Now.Year;
-            if (monthFilter == 12 && DateTime.Now.Month <= 2) // 跨年处理
+            var parts = dateFilter.Split('-');
+            if (parts.Length == 2)
             {
-                return new DateTime(currentYear - 1, monthFilter, 1);
+                if (int.TryParse(parts[0], out int startMonth) && int.TryParse(parts[1], out int endMonth))
+                {
+                    return (startMonth, endMonth);
+                }
             }
-            return new DateTime(currentYear, monthFilter, 1);
+            return (0, 0);
         }
 
-        private int GetMonthFilter(string dateFilter)
+        private (DateTime startDate, DateTime endDate) GetStartAndEndDateForRange(int startMonth, int endMonth, int? year = null)
         {
-            return dateFilter switch
+            int currentYear = year ?? DateTime.Now.Year;
+            DateTime startDate, endDate;
+
+            if (endMonth < startMonth)
             {
-                "3-5月" => 3,
-                "6-8月" => 6,
-                "9-11月" => 9,
-                "12-2月" => 12,
-                _ => 0,
-            };
+                // 處理跨年的情況
+                startDate = new DateTime(currentYear, startMonth, 1);
+                endDate = new DateTime(currentYear + 1, endMonth, DateTime.DaysInMonth(currentYear + 1, endMonth));
+            }
+            else
+            {
+                // 不跨年的情況
+                startDate = new DateTime(currentYear, startMonth, 1);
+                endDate = new DateTime(currentYear, endMonth, DateTime.DaysInMonth(currentYear, endMonth));
+            }
+
+            return (startDate, endDate);
         }
+
+
 
 
 
