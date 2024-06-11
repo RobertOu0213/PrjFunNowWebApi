@@ -39,10 +39,6 @@ public partial class HotelSearchBox
 
     public string HotelImage { get; set; }
 
-    public string HotelTypeName { get; set; }
-
-    public string RoomEquipmentName { get; set; }
-
     public decimal? HotelPrice { get; set; }
 
     public int? HotelMaximumOccupancy { get; set; }
