@@ -36,6 +36,23 @@ namespace PrjFunNowWebApi.Controllers
             return await _context.Members.Where(m => m.FirstName.Contains(keyword) || m.Phone.Contains(keyword) || m.Email.Contains(keyword)).ToListAsync();
         }
 
+        //查有無相符Email
+        [HttpPost("query")]
+        public async Task<IActionResult> QueryEmail([FromBody] EmailQueryDTO model)
+        {
+            // 在資料庫中查詢是否存在相符的 Email 記錄
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == model.Email);
+
+            if (member != null)
+            {
+                return Ok(new { message = "YES" });
+            }
+            else
+            {
+                return NotFound(new { message ="NO" });
+            }
+        }
+
 
         //【Post】新增會員
         [HttpPost]

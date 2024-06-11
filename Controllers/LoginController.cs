@@ -13,6 +13,7 @@ using System.Text;
 
 namespace PrjFunNowWebApi.Controllers
 {
+    
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
@@ -47,7 +48,6 @@ namespace PrjFunNowWebApi.Controllers
             }
 
             return BadRequest("登入失敗");
-
         }
 
         //用來進行帳號密碼比對的方法

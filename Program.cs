@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -21,7 +21,7 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -30,9 +30,9 @@ var tkConf = builder.Configuration.GetSection("Jwt");
 
 var tokenValidationParameters = new TokenValidationParameters
 {
-    ValidateIssuer = true, //���ϥΪ̥i�H���D�o���
+    ValidateIssuer = true, //讓使用者可以知道發行者
     ValidateAudience = true,
-    ValidateLifetime = true, //�i�H�w��L����token�����ڵ�
+    ValidateLifetime = true, //可以針對過期的token給予拒絕
     ValidateIssuerSigningKey = true,
     ValidIssuer = tkConf["Issuer"],
     ValidAudience = tkConf["Audience"],
@@ -46,6 +46,27 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
+// 添加内存缓存
+builder.Services.AddDistributedMemoryCache();
+
+// 添加 Session 服務
+builder.Services.AddSession(options =>
+{
+    // 設置 Session 的 cookie 名稱
+    options.Cookie.Name = ".YourApp.Session";
+
+    // 設置 Session 的過期時間
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+
+    // 設置 cookie 是不是只在 HTTPS 中有效
+    options.Cookie.HttpOnly = true;
+
+    // 設置 cookie 的安全等級
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+builder.Services.AddControllers();
+
 var app = builder.Build();
 app.UseCors("AllowAll");
 
@@ -56,7 +77,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.UseSession(); //註冊Session 服務
 app.UseHttpsRedirection();
 
 app.UseAuthentication();
