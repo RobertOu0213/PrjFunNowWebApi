@@ -479,8 +479,8 @@ namespace PrjFunNowWebApi.Controllers
                 ReportedAt = reportedAt,
                 ReportReason = dto.ReportReason,
                 ReviewStatus = dto.ReviewStatus,
-                ReviewedBy = null, // 可空类型
-                ReviewedAt = null // 可空类型
+                ReviewedBy = null, 
+                ReviewedAt = null 
             };
 
             _context.ReportReviews.Add(reportReview);
@@ -504,8 +504,37 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        
+        //根據會員選取未評論、尚未完成、已評論
+        [HttpGet("GetCommentsByStatus/{memberId}")]
+        public async Task<IActionResult> GetCommentsByStatus(int memberId,int hotelId)
+        {
+                    var comments = await _context.Comments
+            .Where(c => c.MemberId == memberId &&
+                        (c.CommentStatus == "5" || c.CommentStatus == "6" || c.CommentStatus == "7"))
+            .Select(c => new
+            {
+               
+            })
+            .ToListAsync();
 
+                    return Ok(comments);
+                }
+
+
+        //填寫評論表單、新增到DB
+        [HttpPost("AddComment")]
+        public async Task<IActionResult> AddComment([FromBody] Comment newComment)
+        {
+            if (newComment == null)
+            {
+                return BadRequest();
+            }
+
+            _context.Comments.Add(newComment);
+            await _context.SaveChangesAsync();
+
+            return Ok(newComment);
+        }
 
 
 

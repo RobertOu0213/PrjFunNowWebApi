@@ -47,6 +47,15 @@
             public string SearchText { get; set; }
             public List<int> ReviewStatuses { get; set; }
         }
+        public class MemberCommentDTO
+        {
+            public int hotelId { get; set; }
+            public string hotelAddress { get; set; }
+            public string roomtypename { get; set; }
+            public DateTime? cheeckInDate { get; set; }
+            public DateTime? cheeckOutDate { get; set; }
+           
+        }
 
     }
 }
