@@ -25,6 +25,8 @@ public partial class Comment
 
     public DateTime UpdatedAt { get; set; }
 
+    public int? RoomId { get; set; }
+
     public virtual ICollection<CommentTravelerType> CommentTravelerTypes { get; set; } = new List<CommentTravelerType>();
 
     public virtual Hotel Hotel { get; set; }

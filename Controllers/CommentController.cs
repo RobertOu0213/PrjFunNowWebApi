@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.joannaDTO;
 using System.ComponentModel.Design;
+using System.Globalization;
 using System.Reflection.Metadata.Ecma335;
 using static PrjFunNowWebApi.Models.joannaDTO.CommentResponseDTO;
 
@@ -424,18 +425,31 @@ namespace PrjFunNowWebApi.Controllers
             public int Status { get; set; }
         }
 
-        [HttpPost]
+        [HttpPost("SubmitReportReview")]
         public async Task<IActionResult> SubmitReportReview([FromBody] ReportReviewDto dto)
         {
+            if (dto == null)
+            {
+                return BadRequest("Invalid request body");
+            }
+
+            // 解析日期时间字符串
+            if (!DateTime.TryParseExact(dto.ReportedAt, "yyyy-MM-dd HH:mm:ss.fff", CultureInfo.InvariantCulture, DateTimeStyles.None, out var reportedAt))
+            {
+                return BadRequest("Invalid ReportedAt value");
+            }
+
             var reportReview = new ReportReview
             {
                 CommentId = dto.CommentID,
                 MemberId = dto.MemberID,
                 ReportTitleId = dto.ReportTitleID,
                 ReportSubtitleId = dto.ReportSubtitleID,
-                ReportedAt = dto.ReportedAt,
+                ReportedAt = reportedAt,
                 ReportReason = dto.ReportReason,
-                ReviewStatus = dto.ReviewStatus
+                ReviewStatus = dto.ReviewStatus,
+                ReviewedBy = 0, // 默认值
+                ReviewedAt = DateTime.MinValue // 默认值
             };
 
             _context.ReportReviews.Add(reportReview);
@@ -444,25 +458,22 @@ namespace PrjFunNowWebApi.Controllers
             return Ok(new { message = "Report submitted successfully" });
         }
 
+
+
+
+        public class ReportReviewDto
+        {
+            public int CommentID { get; set; }
+            public int MemberID { get; set; }
+            public int ReportTitleID { get; set; }
+            public int ReportSubtitleID { get; set; }
+            public string ReportedAt { get; set; } // 字符串类型，用于接收前端传来的日期字符串
+            public string ReportReason { get; set; }
+            public string ReviewStatus { get; set; }
+        }
+
+
     }
-    public class ReportReviewDto
-    {
-        public int CommentID { get; set; }
-        public int MemberID { get; set; }
-        public int ReportTitleID { get; set; }
-        public int ReportSubtitleID { get; set; }
-        public DateTime ReportedAt { get; set; }
-        public string ReportReason { get; set; }
-        public string ReviewStatus { get; set; }
-    }
-
-
-
-
-
-
-
-
 }
 
 
@@ -479,7 +490,11 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-    
+
+
+
+
+
 
 
 

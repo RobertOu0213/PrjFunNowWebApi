@@ -81,9 +81,9 @@ public partial class FunNowContext : DbContext
 
     public virtual DbSet<TravelerType> TravelerTypes { get; set; }
 
-//    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=FunNow5;Integrated Security=True;Multiple Active Result Sets=True;Encrypt=True;Application Name=EntityFramework");
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=.;Initial Catalog=FunNow5;Integrated Security=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -92,7 +92,9 @@ public partial class FunNowContext : DbContext
             entity.ToTable("City");
 
             entity.Property(e => e.CityId).HasColumnName("CityID");
-            entity.Property(e => e.CityName).IsRequired();
+            entity.Property(e => e.CityName)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.CountryId).HasColumnName("CountryID");
 
             entity.HasOne(d => d.Country).WithMany(p => p.Cities)
@@ -112,6 +114,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.RoomId).HasColumnName("RoomID");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Comments)
@@ -208,10 +211,16 @@ public partial class FunNowContext : DbContext
 
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.CityId).HasColumnName("CityID");
-            entity.Property(e => e.HotelAddress).IsRequired();
+            entity.Property(e => e.HotelAddress)
+                .IsRequired()
+                .HasMaxLength(150);
             entity.Property(e => e.HotelDescription).IsRequired();
-            entity.Property(e => e.HotelName).IsRequired();
-            entity.Property(e => e.HotelPhone).IsRequired();
+            entity.Property(e => e.HotelName)
+                .IsRequired()
+                .HasMaxLength(100);
+            entity.Property(e => e.HotelPhone)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.HotelTypeId).HasColumnName("HotelTypeID");
             entity.Property(e => e.IsActive)
                 .HasDefaultValue(false)
@@ -241,7 +250,9 @@ public partial class FunNowContext : DbContext
             entity.ToTable("HotelEquipment");
 
             entity.Property(e => e.HotelEquipmentId).HasColumnName("HotelEquipmentID");
-            entity.Property(e => e.HotelEquipmentName).IsRequired();
+            entity.Property(e => e.HotelEquipmentName)
+                .IsRequired()
+                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<HotelEquipmentReference>(entity =>
@@ -356,6 +367,7 @@ public partial class FunNowContext : DbContext
 
             entity.HasOne(d => d.HotelImage).WithMany(p => p.ImageCategoryReferences)
                 .HasForeignKey(d => d.HotelImageId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_ImageCategory_Reference_HotelImage");
 
             entity.HasOne(d => d.ImageCategory).WithMany(p => p.ImageCategoryReferences)
