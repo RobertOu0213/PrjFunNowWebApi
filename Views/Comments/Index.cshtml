@@ -1,0 +1,77 @@
+﻿@model IEnumerable<PrjFunNowWebApi.Models.Comment>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CommentTitle)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CommentText)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CommentStatus)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IsReported)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.UpdatedAt)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Hotel)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Member)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CommentTitle)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CommentText)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CommentStatus)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IsReported)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.UpdatedAt)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Hotel.HotelAddress)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Member.Email)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.CommentId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.CommentId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.CommentId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

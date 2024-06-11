@@ -1,0 +1,66 @@
+﻿@model PrjFunNowWebApi.Models.Comment
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Comment</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="HotelId" class="control-label"></label>
+                <select asp-for="HotelId" class ="form-control" asp-items="ViewBag.HotelId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="MemberId" class="control-label"></label>
+                <select asp-for="MemberId" class ="form-control" asp-items="ViewBag.MemberId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="CreatedAt" class="control-label"></label>
+                <input asp-for="CreatedAt" class="form-control" />
+                <span asp-validation-for="CreatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentTitle" class="control-label"></label>
+                <input asp-for="CommentTitle" class="form-control" />
+                <span asp-validation-for="CommentTitle" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentText" class="control-label"></label>
+                <input asp-for="CommentText" class="form-control" />
+                <span asp-validation-for="CommentText" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="CommentStatus" class="control-label"></label>
+                <input asp-for="CommentStatus" class="form-control" />
+                <span asp-validation-for="CommentStatus" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsReported" /> @Html.DisplayNameFor(model => model.IsReported)
+                </label>
+            </div>
+            <div class="form-group">
+                <label asp-for="UpdatedAt" class="control-label"></label>
+                <input asp-for="UpdatedAt" class="form-control" />
+                <span asp-validation-for="UpdatedAt" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

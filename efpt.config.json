@@ -1,5 +1,5 @@
 ﻿{
-   "CodeGenerationMode": 3,
+   "CodeGenerationMode": 4,
    "ContextClassName": "FunNowContext",
    "ContextNamespace": null,
    "FilterSchemas": false,
@@ -133,6 +133,10 @@
       {
          "Name": "[dbo].[TravelerTypes]",
          "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HotelSearchBox]",
+         "ObjectType": 3
       }
    ],
    "UiHint": null,
