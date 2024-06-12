@@ -7,8 +7,7 @@
         public DateTime CheckOutDate { get; set; }
         public int? adults { get; set; } = 0;
         public int? children { get; set; } = 0;
-
-        //public int roomnum { get; set; }  //客戶訂房數
+        public int roomnum { get; set; }  //客戶訂房數
 
     }
 }

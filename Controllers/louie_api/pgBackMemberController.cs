@@ -20,9 +20,9 @@ namespace PrjFunNowWebApi.Controllers.louie_api
         }
         //限API內部使用--------------------------------------------------------------------------------
         //GetMembersByRole(): 用于获取成员列表并转换为 DTO
-        private async Task<List<pgBackMemberDTO>> getMembertoDTOAsync(IQueryable<Member> query)
+        private async Task<List<pgBackMemberDTO>> getMembertoDTOAsync(IQueryable<Member> pagedQuery)
         {
-            var membersWithRoles = await query
+            var membersWithRoles = await pagedQuery
             .Select(m => new pgBackMemberDTO
             {
                 MemberId = m.MemberId,
@@ -106,25 +106,25 @@ namespace PrjFunNowWebApi.Controllers.louie_api
         }
         //更改房客狀態
         [HttpPut("updateMemberRole")]
-        public async Task<IActionResult> UpdateMemberRole([FromBody] UpdateMemberRoleDTO dto)
+        public async Task<IActionResult> updateMemberRole([FromBody] UpdateMemberRoleDTO dto)
         {
+            // 1. 查找指定的成员
             var member = await _context.Members.Include(m => m.Role).FirstOrDefaultAsync(m => m.MemberId == dto.MemberId);
             if (member == null)
             {
                 return NotFound();
             }
 
-            var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == dto.NewRole);
+            // 2. 验证新的角色是否存在
+            var role = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == dto.NewRoleName);
             if (role == null)
             {
                 return BadRequest("Invalid role.");
             }
 
-            // 更新角色状态
+            // 3. 更新角色状态
             member.RoleId = role.RoleId; // 设置RoleId，而不是直接设置RoleName
-
             await _context.SaveChangesAsync();
-
             return NoContent();
         }
     }
