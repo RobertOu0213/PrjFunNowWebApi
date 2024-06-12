@@ -16,11 +16,11 @@ namespace PrjFunNowWebApi.Controllers
     public class CommentController : ControllerBase
     {
         private readonly FunNowContext _context;
-        private readonly ILogger<CommentController> _logger;
+        
 
-        public CommentController(ILogger<CommentController> logger,FunNowContext context)
+        public CommentController(FunNowContext context)
         {
-            _logger = logger;
+            
             _context = context;
         }
 
@@ -34,8 +34,7 @@ namespace PrjFunNowWebApi.Controllers
                 // 基本查询并包含 RatingScores 表
                 IQueryable<Comment> commentsQuery = _context.Comments
                                                              .Where(c => c.HotelId == hotelId)
-                                                             .Include(c => c.RatingScores)
-                                                             .Include(c => c.Member);
+                                                             .Include(c => c.RatingScores);
 
                 if (!string.IsNullOrEmpty(search))
                 {
@@ -111,22 +110,14 @@ namespace PrjFunNowWebApi.Controllers
                             LocationScore = r.LocationScore,
                             FreeWifiScore = r.FreeWifiScore,
                             TravelerType = r.TravelerType
-                        }).ToList(),
-                        MemberId = c.MemberId, // 添加 MemberId 字段
-                        MemberName = c.Member.FirstName, // 添加 MemberName 字段
-                        MemberEmail = c.Member.Email // 添加 MemberEmail 字段
+                        }).ToList()
                     }).ToList();
-           
 
                 var hotelName = _context.Hotels
                                         .Where(h => h.HotelId == hotelId)
                                         .Select(h => h.HotelName)
                                         .FirstOrDefault();
 
-                var memberId = _context.Comments
-                                        .Where(h => h.HotelId == hotelId)
-                                        .Select(h => h.MemberId)
-                                        .FirstOrDefault();
 
                 if (hotelName == null)
                 {
@@ -138,8 +129,7 @@ namespace PrjFunNowWebApi.Controllers
                     TotalItems = totalItems,
                     Comments = comments,
                     HotelName = hotelName,
-                    MemberInfo = memberInfo,
-                    
+                    MemberInfo = memberInfo
                 });
             }
             catch (Exception ex)
@@ -392,9 +382,7 @@ namespace PrjFunNowWebApi.Controllers
                 r.ReviewStatus,
                 r.ReviewedBy,
                 r.ReviewedAt,
-                MemberName = r.Member.FirstName,
-                MemberEmail = r.Member.Email,
-                MemberPhone = r.Member.Phone
+          
             }).ToListAsync();
 
             return Ok(results);
@@ -439,7 +427,7 @@ namespace PrjFunNowWebApi.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error updating comment and report status for request: {@Request}", request);
+               
                 // 记录详细的异常信息
                 return StatusCode(500, "Internal server error");
             }
@@ -506,19 +494,74 @@ namespace PrjFunNowWebApi.Controllers
 
         //根據會員選取未評論、尚未完成、已評論
         [HttpGet("GetCommentsByStatus/{memberId}")]
-        public async Task<IActionResult> GetCommentsByStatus(int memberId,int hotelId)
+        public async Task<IActionResult> GetCommentsByStatus(int memberId)
         {
-                    var comments = await _context.Comments
+               var comments = await _context.Comments
             .Where(c => c.MemberId == memberId &&
                         (c.CommentStatus == "5" || c.CommentStatus == "6" || c.CommentStatus == "7"))
             .Select(c => new
-            {
-               
-            })
-            .ToListAsync();
+            {   
+                c.CommentId,
+                c.MemberId,
+                c.OrderId,
+                c.Hotel.HotelName,
+                c.Member.FirstName,
+                c.Hotel.HotelAddress,
+                c.Member.Email,
+                c.CommentStatus,
+                c.CommentText,
+                c.CommentTitle,
+                c.RatingScores,
+                c.RoomId,
+                c.HotelId,           
 
-                    return Ok(comments);
-                }
+                MemberRatingScores = c.RatingScores.Select(r => new RatingScoreDTO
+                {
+                    RatingId = r.RatingId,
+                    CommentId = r.CommentId,
+                    ComfortScore = r.ComfortScore,
+                    CleanlinessScore = r.CleanlinessScore,
+                    StaffScore = r.StaffScore,
+                    FacilitiesScore = r.FacilitiesScore,
+                    ValueScore = r.ValueScore,
+                    LocationScore = r.LocationScore,
+                    FreeWifiScore = r.FreeWifiScore,
+                    TravelerType = r.TravelerType
+                }).ToList()
+                })
+                .ToListAsync();
+
+            var commentIds = comments.Select(c => c.CommentId).ToList();
+            // 获取 CommentWithInfos 数据
+            var commentWithInfos = await _context.CommentWithInfos
+       .Where(ci => commentIds.Contains(ci.CommentId))
+       .Select(ci => new
+       {
+           ci.CommentId,
+           ci.FirstName,
+           ci.TravelerType,
+           ci.RoomTypeName
+       })
+       .ToListAsync();
+
+            var orders = await _context.OrderDetails
+         .Where(o => comments.Select(c => c.OrderId).Contains(o.OrderId))
+         .ToListAsync();
+
+            var hotelIds = comments.Select(c => c.HotelId).Distinct().ToList();
+            var hotelImages = await _context.HotelImages
+       .Where(h => hotelIds.Contains(h.HotelId))
+       .Select(h => new { h.HotelId,h.HotelImage1 })
+       .ToListAsync();
+
+
+            return Ok(new 
+            { commentinfo = commentWithInfos,
+                comments = comments,
+                orders = orders,
+                hotelImage = hotelImages,
+            });
+           }
 
 
         //填寫評論表單、新增到DB

@@ -115,6 +115,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            entity.Property(e => e.RoomId).HasColumnName("RoomID");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Comments)
