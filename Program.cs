@@ -30,6 +30,7 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials());
+    
 });
 
 // 添加 SignalR 服務
@@ -76,7 +77,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var app = builder.Build();
 
 // 使用 CORS 中間件
-app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowAll");
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())
