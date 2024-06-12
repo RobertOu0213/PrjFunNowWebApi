@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 using PrjFunNowWebApi.Models.louie_dto;
+using System.Net.Http;
+using System.Text.Json;
 
 namespace PrjFunNowWebApi.Controllers.louie_api
 {
@@ -12,12 +14,33 @@ namespace PrjFunNowWebApi.Controllers.louie_api
     public class pgHotelController : ControllerBase
     {
         private readonly FunNowContext _context;
+        private readonly HttpClient _client;
 
-        public pgHotelController(FunNowContext context)
+        public pgHotelController(FunNowContext context, HttpClient client)
         {
             _context = context;
+            _client = client;
         }
         //限API內部使用--------------------------------------------------------------------------------
+        // 从另一个 API 获取平均评分的方法
+        private async Task<double?> GetHotelAverageScore(int hotelId)
+        {
+            var response = await _client.GetAsync($"https://localhost:7103/api/Comment/{hotelId}/AverageScores");
+            if (response.IsSuccessStatusCode)
+            {
+                var jsonString = await response.Content.ReadAsStringAsync();
+                using (var document = JsonDocument.Parse(jsonString))
+                {
+                    if (document.RootElement.TryGetProperty("totalAverageScore", out JsonElement totalAverageScoreElement))
+                    {
+                        var score = totalAverageScoreElement.GetDouble();
+                        return Math.Round(score, 1); // 四舍五入到小数点后 1 位
+                    }
+                }
+            }
+            return null;
+        }
+
 
         //要被前端呼叫的http方法----------------------------------------------------------------------------
         [HttpGet("{id}")]
@@ -62,6 +85,19 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 })
                 .ToListAsync();
 
+            // 调用另一个 API 获取评分信息并更新 similarHotels
+            var tasks = similarHotels.Select(async similarHotel =>
+            {
+                var averageScore = await GetHotelAverageScore(similarHotel.HotelId);
+                if (averageScore.HasValue)
+                {
+                    similarHotel.AverageRatingScores = averageScore.Value;
+                }
+                return similarHotel;
+            });
+
+            similarHotels = (await Task.WhenAll(tasks)).ToList();
+
             var hotelDetail = new pgHotel_HotelDetailDTO
             {
                 HotelName = hotel.HotelName,
@@ -97,7 +133,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
 
                 }).ToList(),
                 AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
-                SimilarHotels = similarHotels // 添加相似酒店
+                SimilarHotels = similarHotels.ToList() // 添加相似酒店
             };
 
             return Ok(hotelDetail);

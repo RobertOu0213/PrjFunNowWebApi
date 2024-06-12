@@ -9,5 +9,6 @@
         public decimal AverageRoomPrice { get; set; }
         public int AvailableRooms { get; set; }
         public pgHotel_ImageDTO? HotelImage { get; set; } // 添加这个属性
+        public double AverageRatingScores { get; set; }
     }
 }
