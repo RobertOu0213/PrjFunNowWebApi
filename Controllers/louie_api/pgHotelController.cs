@@ -66,6 +66,34 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return NotFound();
             }
 
+            // 获取特定日期范围内的预订记录
+            var checkInDate = DateTime.Parse("2024-06-12"); // 示例开始日期
+            var checkOutDate = DateTime.Parse("2024-06-13"); // 示例结束日期
+
+            var orders = await _context.OrderDetails
+                .Where(k => !(k.CheckInDate >= checkOutDate || k.CheckOutDate <= checkInDate))
+                .Select(k => k.RoomId)
+                .ToListAsync();
+
+            // 过滤掉已预订的房间
+            var availableRooms = hotel.Rooms
+                .Where(r => !orders.Contains(r.RoomId))
+                .Select(r => new pgHotel_RoomDTO
+                {
+                    RoomId = r.RoomId,
+                    RoomName = r.RoomName,
+                    RoomPrice = r.RoomPrice,
+                    MaximumOccupancy = r.MaximumOccupancy,
+                    MemberID = r.MemberId,
+                    RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
+                    RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
+                    {
+                        ImageUrl = i.RoomImage1,
+                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
+                    }).ToList()
+                })
+                .ToList();
+
             var similarHotels = await _context.Hotels
                 .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id) // 根据 CityId 进行比对
                 .Take(9)
@@ -117,21 +145,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     ImageUrl = i.HotelImage1,
                     ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
                 }).ToList(),
-                Rooms = hotel.Rooms.Select(r => new pgHotel_RoomDTO
-                {
-                    RoomId = r.RoomId,
-                    RoomName = r.RoomName,
-                    RoomPrice = r.RoomPrice,
-                    MaximumOccupancy = r.MaximumOccupancy,
-                    MemberID = r.MemberId,
-                    RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
-                    RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
-                    {
-                        ImageUrl = i.RoomImage1,
-                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
-                    }).ToList()
-
-                }).ToList(),
+                Rooms = availableRooms,
                 AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
                 SimilarHotels = similarHotels.ToList() // 添加相似酒店
             };
