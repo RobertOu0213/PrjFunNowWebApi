@@ -13,5 +13,10 @@
         public int? lowerPrice { get; set; } = 1;
         public int? upperPrice { get; set; } = 50000;
 
+        // 新增篩選條件
+        // 修改為 List<int>
+        public List<int> HotelTypes { get; set; } = new List<int>();
+
+
     }
 }

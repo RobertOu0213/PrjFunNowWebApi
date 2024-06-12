@@ -296,6 +296,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.HotelName).IsRequired();
             entity.Property(e => e.HotelPhone).IsRequired();
             entity.Property(e => e.HotelPrice).HasColumnType("decimal(38, 6)");
+            entity.Property(e => e.HotelTypeId).HasColumnName("HotelTypeID");
             entity.Property(e => e.HotelTypeName).IsRequired();
             entity.Property(e => e.IsActive).HasColumnName("isActive");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");

@@ -39,6 +39,8 @@ public partial class HotelSearchBox
 
     public string HotelImage { get; set; }
 
+    public int HotelTypeId { get; set; }
+
     public string HotelTypeName { get; set; }
 
     public string RoomEquipmentName { get; set; }
