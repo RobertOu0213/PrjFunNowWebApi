@@ -16,6 +16,9 @@ namespace PrjFunNowWebApi.Controllers
         {
             _context = context;
         }
+
+
+
         // GET: api/Members/{memberId}/favorite-hotels
         [HttpGet("{memberId}/FavoriteHotels")]
         public async Task<ActionResult<IEnumerable<Hotel>>> GetFavoriteHotels(int memberId)
@@ -28,19 +31,31 @@ namespace PrjFunNowWebApi.Controllers
             IQueryable<Hotel> query = _context.Hotels
                                                .Where(h => memberLikes.Contains(h.HotelId))
                                               .Include(h => h.HotelImages);  // 確保加載相關的圖片數據
-            var groupedResult = await query
-                                 .GroupBy(h => new { h.City.CityName, h.City.Country.CountryName/*,h.HotelImages */})
-                                 .Select(g => new {
-                                     //g.Key.HotelImages,
-                                     City = g.Key.CityName,
-                                     Country = g.Key.CountryName,
-                                     HotelCount = g.Count(),
-                                     ImageUrl = g.FirstOrDefault().HotelImages.FirstOrDefault().HotelImage1 // 假設每個酒店至少有一張圖片// 使用空條件運算符和預設圖片
-                                 })
-                                 .ToListAsync();
-            return Ok(groupedResult);
 
-
+               // 首先，执行基本查询并将结果加载到内存中
+            var hotelData = await query
+                .GroupBy(h => new { h.City.CityName, h.City.Country.CountryName })
+                .Select(g => new {
+                    City = g.Key.CityName,
+                    Country = g.Key.CountryName,
+                    Hotels = g.ToList()  // 将组内的酒店列表一起取出
+                })
+                .ToListAsync();
+            // 然后，在内存中处理 null 值和提取图片 URL
+            var groupedResult = hotelData.Select(g => new {
+                City = g.City,
+                Country = g.Country,
+                HotelCount = g.Hotels.Count,
+                ImageUrl = string.IsNullOrEmpty(g.Hotels
+                    .SelectMany(h => h.HotelImages)
+                    .Select(img => img.HotelImage1)
+                    .FirstOrDefault())? "https://stickershop.line-scdn.net/stickershop/v1/sticker/548880784/IOS/sticker.png"
+                                               : g.Hotels
+                    .SelectMany(h => h.HotelImages)
+                    .Select(img => img.HotelImage1)
+                    .FirstOrDefault()
+                      }).ToList();
+                 return Ok(groupedResult);
         }
 
         [HttpGet("{memberId}/FavoriteHotels/{cityName}")]
@@ -68,6 +83,38 @@ namespace PrjFunNowWebApi.Controllers
 
             return Ok(hotels);
         }
+
+
+
+        [HttpPut("{memberId}/{hotelId}")]
+        public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId, [FromBody] bool likeStatus)
+        {
+            var hotelLike = await _context.HotelLikes.FirstOrDefaultAsync(hl => hl.MemberId == memberId && hl.HotelId == hotelId);
+
+            if (hotelLike == null)
+            {
+                hotelLike = new HotelLike
+                {
+                    MemberId = memberId,
+                    HotelId = hotelId,
+                    LikeStatus = likeStatus
+                };
+                _context.HotelLikes.Add(hotelLike);
+            }
+            else
+            {
+                hotelLike.LikeStatus = likeStatus;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
+
+
+
+
+
 
     }
 
