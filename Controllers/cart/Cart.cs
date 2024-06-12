@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.DTO;
 
 namespace PrjFunNowWebApi.Controllers.cart
 {
@@ -21,14 +22,52 @@ namespace PrjFunNowWebApi.Controllers.cart
         }
 
         [HttpGet]
-        //public async Task<ActionResult<OrderDetail>> GetAllCarts()
-        //{
+        public async Task<ActionResult> GetAllCarts(int? userId)
+        {
+            if (userId == null)
+            {
+                return BadRequest("UserID is required");
+            }
+            try
+            {
+    
+                var allOrderDetailsCount = await _context.OrderDetails
+                    .Where(od => od.MemberId == userId)
+                    .CountAsync();
 
-        //}
+                var orderDetails = await _context.OrderDetails
+                    .Where(od => od.MemberId == userId)
+                .ToListAsync();
+
+                var orderDetailDtos = orderDetails.Select(od => new cartItemsDTO
+                {
+                    HotelName = od.Room.Hotel.HotelName,
+                    RoomType = od.Room.RoomType.RoomTypeName,  
+                    RoomName = od.Room.RoomName,
+                    RoomPrice = od.Room.RoomPrice,
+                    CityName = od.Room.Hotel.City.CityName,
+                    AllCommentsCount = od.Room.Hotel.Comments.Count,
+                    LevelStar = (int)od.Room.Hotel.LevelStar,
+                    CheckInDate = od.CheckInDate,
+                    CheckOutDate = od.CheckOutDate,
+                    RoomID = od.RoomId,
+                    MaximumOccupancy = od.Room.MaximumOccupancy,
+                    AllOrderDetailsCount = allOrderDetailsCount
+                }).ToList();
+
+                return Ok(orderDetailDtos);
+            }
+            catch (Exception ex)
+            {
+
+                return StatusCode(500, "An error occurred while processing your request. Please try again later.");
+            }
+
+        }
 
         // GET: api/OrderDetails/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDetail>> GetOrderDetail(int id=5 )
+        public async Task<ActionResult<OrderDetail>> GetOrderDetail(int? id )
         {
             var orderDetail = await _context.OrderDetails.FindAsync(id);
 
