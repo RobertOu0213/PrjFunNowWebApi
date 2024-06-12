@@ -286,12 +286,14 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
+            entity.Property(e => e.CityId).HasColumnName("CityID");
             entity.Property(e => e.CityName).IsRequired();
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
             entity.Property(e => e.HotelAddress).IsRequired();
             entity.Property(e => e.HotelDescription).IsRequired();
+            entity.Property(e => e.HotelEquipmentId).HasColumnName("HotelEquipmentID");
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.HotelName).IsRequired();
             entity.Property(e => e.HotelPhone).IsRequired();
@@ -300,6 +302,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.HotelTypeName).IsRequired();
             entity.Property(e => e.IsActive).HasColumnName("isActive");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
+            entity.Property(e => e.RoomEquipmentId).HasColumnName("RoomEquipmentID");
         });
 
         modelBuilder.Entity<HotelType>(entity =>
