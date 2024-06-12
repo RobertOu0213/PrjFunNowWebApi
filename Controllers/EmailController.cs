@@ -164,7 +164,7 @@ namespace PrjFunNowWebApi.Controllers
                     <p>{request.Body}</p>
         <div class=""message-content"">
             <img src=""https://imgur.com/7b5OMro.png"" alt=""回覆顧客問題就是這麼簡單！"">
-            <p>FunNow 體貼你，只要直接回覆這封郵件，你的答覆就會直接發送給顧客，不用再費心編輯或輸入電子信箱。</p>
+            <p>FunNow 體貼你，只要直接回覆這封郵件，你的答覆就會直接發送給客服專員，不用再費心編輯或輸入電子信箱，客服專員將會協助您處理。</p>
         </div>
         <div class=""links"">
             <a href=""https://localhost:7284/home/index"">24小時客服中心</a>
