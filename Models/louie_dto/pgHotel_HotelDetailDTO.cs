@@ -21,5 +21,7 @@ namespace PrjFunNowWebApi.Models.louie_dto
         //你可能喜歡
         public int CityId { get; set; } // 新增 CityId 属性
         public List<pgHotel_SimilarHotelsDTO>? SimilarHotels { get; set; } // 新增 SimilarHotels 属性
+        public string? CheckInDate { get; set; }  // 新增
+        public string? CheckOutDate { get; set; } // 新增
     }
 }

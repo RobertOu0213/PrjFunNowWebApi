@@ -44,8 +44,23 @@ namespace PrjFunNowWebApi.Controllers.louie_api
 
         //要被前端呼叫的http方法----------------------------------------------------------------------------
         [HttpGet("{id}")]
-        public async Task<ActionResult<pgHotel_HotelDetailDTO>> GetHotelDetail(int id)
+        public async Task<ActionResult<pgHotel_HotelDetailDTO>> GetHotelDetail(int id, [FromQuery] string checkInDate, [FromQuery] string checkOutDate)
         {
+            if (string.IsNullOrEmpty(checkInDate) || string.IsNullOrEmpty(checkOutDate))
+            {
+                return BadRequest("Check-in and check-out dates are required.");
+            }
+
+            DateTime parsedCheckInDate;
+            DateTime parsedCheckOutDate;
+
+            if (!DateTime.TryParse(checkInDate, out parsedCheckInDate) || !DateTime.TryParse(checkOutDate, out parsedCheckOutDate))
+            {
+                return BadRequest("Invalid date format.");
+            }
+
+
+
             var hotel = await _context.Hotels
                 .Include(h => h.City)
                 .ThenInclude(c => c.Country)
@@ -66,18 +81,13 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return NotFound();
             }
 
-            // 获取特定日期范围内的预订记录
-            var checkInDate = DateTime.Parse("2024-06-12"); // 示例开始日期
-            var checkOutDate = DateTime.Parse("2024-06-13"); // 示例结束日期
-
             var orders = await _context.OrderDetails
-                .Where(k => !(k.CheckInDate >= checkOutDate || k.CheckOutDate <= checkInDate))
-                .Select(k => k.RoomId)
-                .ToListAsync();
+        .Where(k => !(k.CheckInDate >= parsedCheckOutDate || k.CheckOutDate <= parsedCheckInDate))
+        .Select(k => k.RoomId)
+        .ToListAsync();
 
-            // 过滤掉已预订的房间
             var availableRooms = hotel.Rooms
-                .Where(r => !orders.Contains(r.RoomId))
+                .Where(r => r.RoomStatus == true && !orders.Contains(r.RoomId))
                 .Select(r => new pgHotel_RoomDTO
                 {
                     RoomId = r.RoomId,
