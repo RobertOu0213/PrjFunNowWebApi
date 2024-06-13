@@ -4,10 +4,13 @@ using Newtonsoft.Json;
 
 namespace PrjFunNowWebApi.Controllers
 {
+    //reCaptcha我不是機器人的參考網址:https://reurl.cc/Vzle26
+
     [Route("api/[controller]")]
     [ApiController]
     public class reCaptchaController : ControllerBase
     {
+        //放從GoogleDep取得的網址
         private const string ReCaptchaSecret = "6Ld5o_cpAAAAAOi9Rr9zOWyRfgpXjHD5sf1mo-RM";
 
         [HttpPost("VerifyCaptcha")]
@@ -43,6 +46,7 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
+        //這些Model應該要放在DTO比較好，但我好懶得一直新增，就放這裡吧~
         public class CaptchaRequest
         {
             public string Response { get; set; }
