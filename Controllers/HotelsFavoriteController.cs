@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.julia_class;
+
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -59,36 +62,64 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         [HttpGet("{memberId}/FavoriteHotels/{cityName}")]
-        public async Task<ActionResult<IEnumerable<Hotel>>> GetFavoriteHotelsForCity(int memberId, string cityName)
+        public async Task<ActionResult<IEnumerable<object>>> GetFavoriteHotelsForCity(int memberId, string cityName)
         {
+            // 获取会员喜欢的酒店ID列表
             var memberLikes = await _context.HotelLikes
-                                .Where(hl => hl.MemberId == memberId && hl.LikeStatus == true)
-                                .Select(hl => hl.HotelId)
-                                .ToListAsync();
+                        .Where(hl => hl.MemberId == memberId && hl.LikeStatus == true)
+                        .Select(hl => hl.HotelId)
+                        .ToListAsync();
 
+            // 获取对应城市的酒店列表
             var hotels = await _context.Hotels
-                            .Where(h => memberLikes.Contains(h.HotelId) && h.City.CityName == cityName)
-                             .Select(h => new {
-                                 //HotelImage = h.HotelImages,
-                                 HotelName = h.HotelName,
-                                 City = h.City.CityName,
-                                 Country = h.City.Country.CountryName,
-                                 LevelStar = h.LevelStar,
-                                 //hotel.rating,
-                                 //hotel.reviewCount,
-                                 MinimumPrice = h.Rooms.Min(r => r.RoomPrice),
-                                 HotelImage = h.HotelImages.FirstOrDefault().HotelImage1 // 假设每个酒店至少有一张图片
-                             })
-                             .ToListAsync();
+                        .Where(h => memberLikes.Contains(h.HotelId) && h.City.CityName == cityName)
+                        .Include(h => h.HotelImages)
+                        .Select(h => new {
+                            HotelId = h.HotelId,
+                            HotelName = h.HotelName,
+                            City = h.City.CityName,
+                            Country = h.City.Country.CountryName,
+                            LevelStar = h.LevelStar,
+                            MinimumPrice = h.Rooms.Min(r => r.RoomPrice),
+                            HotelImage = h.HotelImages.FirstOrDefault().HotelImage1
+                        })
+                        .ToListAsync();
 
-            return Ok(hotels);
+            // HttpClient 初始化
+            HttpClient httpClient = new HttpClient();
+
+            // 为每个酒店添加评分
+            var hotelsWithRatings = new List<object>();
+            foreach (var hotel in hotels)
+            {
+                string ratingUrl = $"https://localhost:7103/api/Comment/{hotel.HotelId}/AverageScores";
+                var response = await httpClient.GetStringAsync(ratingUrl);
+                // 假设response直接返回一个评分值
+
+             
+
+                hotelsWithRatings.Add(new
+                {
+                    hotel.HotelId,
+                    hotel.HotelName,
+                    hotel.City,
+                    hotel.Country,
+                    hotel.LevelStar,
+                    hotel.MinimumPrice,
+                    hotel.HotelImage,
+                    Rating = response  // 将评分添加到输出中
+                });
+            }
+
+            return Ok(hotelsWithRatings);
         }
 
 
 
         [HttpPut("{memberId}/{hotelId}")]
-        public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId, [FromBody] bool likeStatus)
+        public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId,  bool likeStatus)
         {
+            Console.WriteLine($"Received request to update like status for memberId: {memberId}, hotelId: {hotelId}, likeStatus: {likeStatus}");
             var hotelLike = await _context.HotelLikes.FirstOrDefaultAsync(hl => hl.MemberId == memberId && hl.HotelId == hotelId);
 
             if (hotelLike == null)
