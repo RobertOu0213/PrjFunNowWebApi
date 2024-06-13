@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using static System.Collections.Specialized.BitVector32;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -19,7 +20,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             _context = context;
         }
-
+      
         [HttpGet]
         public async Task<ActionResult> GetHotel()
         {
@@ -136,4 +137,3 @@ namespace PrjFunNowWebApi.Controllers
     }
 }
 
-//test
