@@ -173,6 +173,7 @@ namespace PrjFunNowWebApi.Controllers
 
         private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int ratingFilter)
         {
+
             var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), ratingFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
@@ -220,6 +221,8 @@ namespace PrjFunNowWebApi.Controllers
 
         private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
         {
+            var ratingText = RatingTxtgforA(query);
+
             switch (ratingFilter)
             {
                 case 2: // 超讚: 9+
@@ -298,13 +301,77 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpGet("AverageRatingText/{hotelId}")]
+        public async Task<IActionResult> GetAverageRatingText(int hotelId)
+        {
+            var averageScore = await _context.Comments
+                .Where(c => c.HotelId == hotelId)
+                .Select(c => c.RatingScores.Average(r =>
+                    (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7))
+                .FirstOrDefaultAsync();
+
+            if (averageScore == null)
+            {
+                return NotFound("未找到评分数据");
+            }
+
+            var ratingText = GetRatingText(averageScore);
+
+            return Ok(new { HotelId = hotelId, AverageScore = averageScore, RatingText = ratingText });
+        }
+
+        private string GetRatingText(decimal averageScore)
+        {
+            if (averageScore >= 9)
+            {
+                return "超讚";
+            }
+            else if (averageScore >= 7)
+            {
+                return "很讚";
+            }
+            else if (averageScore >= 5)
+            {
+                return "很好";
+            }
+            else if (averageScore >= 3)
+            {
+                return "尚可";
+            }
+            else
+            {
+                return "低於預期";
+            }
+        }
 
 
+        private string RatingTxtgforA(IQueryable<Comment> query)
+        {
+            var averageScore = query.Select(c => c.RatingScores.Average(r =>
+                (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7))
+                .FirstOrDefault();
 
-
-
-
-
+            if (averageScore >= 9)
+            {
+                return "超讚";
+            }
+            else if (averageScore >= 7)
+            {
+                return "很讚";
+            }
+            else if (averageScore >= 5)
+            {
+                return "很好";
+            }
+            else if (averageScore >= 3)
+            {
+                return "尚可";
+            }
+            else
+            {
+                return "低於預期";
+            }
+        }
 
 
 
@@ -566,19 +633,65 @@ namespace PrjFunNowWebApi.Controllers
 
         //填寫評論表單、新增到DB
         [HttpPost("AddComment")]
-        public async Task<IActionResult> AddComment([FromBody] Comment newComment)
+        public async Task<IActionResult> AddComment([FromBody] CommentRequest newCommentRequest)
         {
-            if (newComment == null)
+            if (newCommentRequest == null)
             {
                 return BadRequest();
             }
 
+            // 创建新的 Comment 实体
+            var newComment = new Comment
+            {
+                CommentTitle = newCommentRequest.CommentTitle,
+                CommentText = newCommentRequest.CommentText,
+                UpdatedAt = DateTime.UtcNow, // 设置更新时间
+                CommentStatus = newCommentRequest.CommentStatus
+            };
+
+            // 添加 Comment 实体到数据库
             _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
 
-            return Ok(newComment);
+            // 创建新的 RatingScores 实体
+            var newRatingScore = new RatingScore
+            {
+                CommentId = newComment.CommentId, // 获取保存后的 Comment ID
+                RoomId = newCommentRequest.RoomID,
+                ComfortScore = newCommentRequest.ComfortScore,
+                CleanlinessScore = newCommentRequest.CleanlinessScore,
+                StaffScore = newCommentRequest.StaffScore,
+                FacilitiesScore = newCommentRequest.FacilitiesScore,
+                ValueScore = newCommentRequest.ValueScore,
+                LocationScore = newCommentRequest.LocationScore,
+                FreeWifiScore = newCommentRequest.FreeWifiScore,
+                TravelerType = newCommentRequest.TravelerType
+            };
+
+            // 添加 RatingScores 实体到数据库
+            _context.RatingScores.Add(newRatingScore);
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { Comment = newComment, RatingScore = newRatingScore });
         }
 
+        public class CommentRequest
+        {
+            public int CommentID { get; set; }
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
+            public int RoomID { get; set; }
+            public int ComfortScore { get; set; }
+            public int CleanlinessScore { get; set; }
+            public int StaffScore { get; set; }
+            public int FacilitiesScore { get; set; }
+            public int ValueScore { get; set; }
+            public int LocationScore { get; set; }
+            public int FreeWifiScore { get; set; }
+            public string TravelerType { get; set; }
+            public DateTime UpdatedAt { get; set; }
+            public string CommentStatus { get; set; }
+        }
 
 
     }

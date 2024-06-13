@@ -57,5 +57,46 @@
            
         }
 
+        public class CommentRequest
+        {
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
+            public int RoomID { get; set; }
+            public int ComfortScore { get; set; }
+            public int CleankinessScore { get; set; }
+            public int StaffScore { get; set; }
+            public int FacilitiesScore { get; set; }
+            public int ValueScore { get; set; }
+            public int LocationScore { get; set; }
+            public int FreeWifiScore { get; set; }
+            public string TravelerType { get; set; }
+        }
+
+        public class AddComment
+        {
+            public int CommentID { get; set; }
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
+            public DateTime UpdatedAt { get; set; }
+            public int CommentStatus { get; set; }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
+
 }
