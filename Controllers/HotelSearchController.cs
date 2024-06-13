@@ -22,7 +22,7 @@ namespace PrjFunNowWebApi.Controllers
         [HttpPost]
         [Route("indexsearch")]
         public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
-        {
+        {       //返回一個異步任務，結果是一個包含 HotelSearchBox 對象的集合        //參數 indexhotelSearchDTO 是從 HTTP 請求的主體中反序列化而來的，代表使用者傳遞的搜尋條件
             try
             {
                 if (indexhotelSearchDTO == null)
@@ -32,11 +32,13 @@ namespace PrjFunNowWebApi.Controllers
 
                 int totalPeople = (indexhotelSearchDTO.adults ?? 0) + (indexhotelSearchDTO.children ?? 0);
 
+                //查找在搜尋日期範圍內已有訂單的房間 ID。
                 var orders = await _context.OrderDetails
                     .Where(k => !(k.CheckInDate >= indexhotelSearchDTO.CheckOutDate || k.CheckOutDate <= indexhotelSearchDTO.CheckInDate))
                     .Select(k => k.RoomId)
                     .ToListAsync();
 
+                //查找所有飯店，並包含其房間、城市、國家、設備和圖片等相關信息。
                 var hotels = await _context.Hotels
                     .Include(h => h.Rooms)
                         .ThenInclude(r => r.RoomEquipmentReferences)
@@ -46,6 +48,7 @@ namespace PrjFunNowWebApi.Controllers
                     .Include(h => h.HotelImages)
                     .ToListAsync();
 
+                //過濾掉已被訂走的房間，並確保每個飯店有足夠的房間數和容納人數，生成包含飯店和房間的查詢結果。
                 var hotelsQuery = hotels
                     .AsEnumerable()
                     .Select(h => new
@@ -156,12 +159,12 @@ namespace PrjFunNowWebApi.Controllers
         [Route("hotelLike")]
         public IActionResult Post([FromBody] HotelLike hotelLike)
         {
-            if (hotelLike == null)
+            if (hotelLike == null) //如果傳遞過來的對象為空，返回一個回應，表示錯誤的請求。
             {
                 return BadRequest("HotelLike object is null.");
             }
 
-            // 檢查是否已存在該用戶對該酒店的喜歡記錄
+            // 檢查是否已存在該用戶對該飯店的喜歡記錄
             var existingLike = _context.HotelLikes
                 .FirstOrDefault(h => h.HotelId == hotelLike.HotelId && h.MemberId == hotelLike.MemberId);
 
