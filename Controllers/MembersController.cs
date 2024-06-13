@@ -45,7 +45,7 @@ namespace PrjFunNowWebApi.Controllers
 
             if (member != null)
             {
-                return Ok(new { message = "YES" });
+                return Ok(new { message = "YES" }); 
             }
             else
             {
