@@ -152,7 +152,34 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("hotelLike")]
+        public IActionResult Post([FromBody] HotelLike hotelLike)
+        {
+            if (hotelLike == null)
+            {
+                return BadRequest("HotelLike object is null.");
+            }
 
+            // 檢查是否已存在該用戶對該酒店的喜歡記錄
+            var existingLike = _context.HotelLikes
+                .FirstOrDefault(h => h.HotelId == hotelLike.HotelId && h.MemberId == hotelLike.MemberId);
+
+            if (existingLike != null)
+            {
+                // 更新現有記錄的 LikeStatus
+                existingLike.LikeStatus = hotelLike.LikeStatus;
+            }
+            else
+            {
+                // 添加新記錄
+                _context.HotelLikes.Add(hotelLike);
+            }
+
+            _context.SaveChanges();
+
+            return Ok();
+        }
     }
 
 }
