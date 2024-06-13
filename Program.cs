@@ -18,6 +18,7 @@ builder.Services.AddCors(options =>
         builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 });
 
+builder.Services.AddHttpClient();
 
 // Add services to the container.
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 using System.IdentityModel.Tokens.Jwt;
@@ -21,12 +22,13 @@ namespace PrjFunNowWebApi.Controllers
     {
         private readonly IConfiguration _config;
         private readonly FunNowContext _context;
-
+      
         public LoginController(IConfiguration config, FunNowContext context)
         {
-            _config = config;
+            _config = config; //注入appsettings.json
             _context = context;
         }
+
 
         [AllowAnonymous]
         [HttpPost]
