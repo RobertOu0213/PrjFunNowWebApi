@@ -16,5 +16,9 @@
         public int MaximumOccupancy { get; set; }
         public int AllOrderDetailsCount { get; set; }
 
+        public string RoomImage { get; set; }
+
+        public int OrderDetailID { get; set; }
+
     }
 }

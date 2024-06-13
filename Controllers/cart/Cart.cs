@@ -21,7 +21,7 @@ namespace PrjFunNowWebApi.Controllers.cart
             _context = context;
         }
 
-        [HttpGet]
+        [HttpGet("{userId}")]
         public async Task<ActionResult> GetAllCarts(int? userId)
         {
             if (userId == null)
@@ -30,32 +30,43 @@ namespace PrjFunNowWebApi.Controllers.cart
             }
             try
             {
-    
                 var allOrderDetailsCount = await _context.OrderDetails
                     .Where(od => od.MemberId == userId)
                     .CountAsync();
 
                 var orderDetails = await _context.OrderDetails
                     .Where(od => od.MemberId == userId)
-                .ToListAsync();
+                    .Include(od => od.Room)
+                        .ThenInclude(r => r.Hotel)
+                            .ThenInclude(h => h.City)
+                    .Include(od => od.Room)
+                        .ThenInclude(r => r.RoomType)
+                    .Include(od => od.Room)
+                        .ThenInclude(r => r.Hotel)
+                            .ThenInclude(h => h.Comments)
+                    .Include(od => od.Room)
+                        .ThenInclude(r => r.RoomImages)
+                    .ToListAsync();
 
                 var orderDetailDtos = orderDetails.Select(od => new cartItemsDTO
                 {
-                    HotelName = od.Room.Hotel.HotelName,
-                    RoomType = od.Room.RoomType.RoomTypeName,  
-                    RoomName = od.Room.RoomName,
-                    RoomPrice = od.Room.RoomPrice,
-                    CityName = od.Room.Hotel.City.CityName,
-                    AllCommentsCount = od.Room.Hotel.Comments.Count,
-                    LevelStar = (int)od.Room.Hotel.LevelStar,
+                    OrderDetailID = od.OrderDetailId,
+                    HotelName = od.Room?.Hotel?.HotelName,
+                    RoomType = od.Room?.RoomType?.RoomTypeName,
+                    RoomName = od.Room?.RoomName,
+                    RoomPrice = od.Room?.RoomPrice ?? 0,
+                    CityName = od.Room?.Hotel?.City?.CityName,
+                    AllCommentsCount = od.Room?.Hotel?.Comments?.Count() ?? 0,
+                    LevelStar = od.Room?.Hotel?.LevelStar ?? 0,
                     CheckInDate = od.CheckInDate,
                     CheckOutDate = od.CheckOutDate,
                     RoomID = od.RoomId,
-                    MaximumOccupancy = od.Room.MaximumOccupancy,
-                    AllOrderDetailsCount = allOrderDetailsCount
+                    MaximumOccupancy = od.Room?.MaximumOccupancy ?? 0,
+                    AllOrderDetailsCount = allOrderDetailsCount,
+                    RoomImage = od.Room?.RoomImages?.FirstOrDefault()?.RoomImage1,
                 }).ToList();
 
-                return Ok(orderDetailDtos);
+                return Ok(new { success=true, orderDetailDtos});
             }
             catch (Exception ex)
             {
@@ -66,21 +77,23 @@ namespace PrjFunNowWebApi.Controllers.cart
         }
 
         // GET: api/OrderDetails/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<OrderDetail>> GetOrderDetail(int? id )
-        {
-            var orderDetail = await _context.OrderDetails.FindAsync(id);
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<OrderDetail>> GetOrderDetail(int? id )
+        //{
+        //    var orderDetail = await _context.OrderDetails.FindAsync(id);
 
-            if (orderDetail == null)
-            {
-                return NotFound();
-            }
+        //    if (orderDetail == null)
+        //    {
+        //        return NotFound();
+        //    }
 
-            return orderDetail;
-        }
+        //    return orderDetail;
+        //}
 
 
         // POST: api/OrderDetails
+
+
         [HttpPost]
         public async Task<ActionResult<OrderDetail>> PostOrderDetail(OrderDetail orderDetail)
         {
@@ -91,15 +104,22 @@ namespace PrjFunNowWebApi.Controllers.cart
                 _context.OrderDetails.Add(orderDetail);
                 await _context.SaveChangesAsync();
 
-                var room = await _context.Rooms.FirstOrDefaultAsync(r => r.RoomId == orderDetail.RoomId);
+                var room = await _context.Rooms
+                .Include(r => r.RoomImages) 
+                .FirstOrDefaultAsync(r => r.RoomId == orderDetail.RoomId);
+
                 var roomName = room != null ? room.RoomName : null;
+                var roomPrice = room != null ? room.RoomPrice : 0; 
+                var roomImage = room != null && room.RoomImages.Any() ? room.RoomImages.FirstOrDefault().RoomImage1 : null;
 
                 var filterData = new
                 {
                     success = true,
                     CheckInDate = orderDetail.CheckInDate,
                     CheckOutDate = orderDetail.CheckOutDate,
-                    RoomName = roomName
+                    RoomName = roomName,
+                    RoomPrice = roomPrice,
+                    RoomImage = roomImage
                 };
                 return Ok(filterData);
             }
@@ -109,7 +129,28 @@ namespace PrjFunNowWebApi.Controllers.cart
             }
         }
 
+        // DELETE: api/Cart/{orderDetailID}
+        [HttpDelete("{orderDetailID}")]
+        public async Task<ActionResult> DeleteOrderDetail(int orderDetailID)
+        {
+            try
+            {
+                var orderDetail = await _context.OrderDetails.FirstOrDefaultAsync(or => or.OrderDetailId == orderDetailID);
+                if (orderDetail == null)
+                {
+                    return NotFound("OrderDetail not found");
+                }
 
+                _context.OrderDetails.Remove(orderDetail);
+                await _context.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An error occurred while processing your request. Please try again later.");
+            }
+        }
 
 
     }
