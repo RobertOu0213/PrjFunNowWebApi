@@ -296,9 +296,6 @@ public partial class FunNowContext : DbContext
                 .HasNoKey()
                 .ToView("HotelSearchBox");
 
-            entity.Property(e => e.CityName)
-                .IsRequired()
-                .HasMaxLength(50);
             entity.Property(e => e.CommentText).IsRequired();
             entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CountryName).IsRequired();
@@ -383,6 +380,7 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.RoleId)
                 .HasDefaultValueSql("((1))")
                 .HasColumnName("RoleID");
+            entity.Property(e => e.VerificationTokenExpiry).HasColumnType("datetime");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Members)
                 .HasForeignKey(d => d.RoleId)

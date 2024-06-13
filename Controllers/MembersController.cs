@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Mail;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -15,10 +16,12 @@ namespace PrjFunNowWebApi.Controllers
     public class MembersController : ControllerBase
     {
         private readonly FunNowContext _context;
+        private readonly IConfiguration _configuration;
 
-        public MembersController(FunNowContext context)
+        public MembersController(FunNowContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         //【Get】查詢所有會員
@@ -40,16 +43,24 @@ namespace PrjFunNowWebApi.Controllers
         [HttpPost("query")]
         public async Task<IActionResult> QueryEmail([FromBody] EmailQueryDTO model)
         {
-            // 在資料庫中查詢是否存在相符的 Email 記錄
+            // 在資料庫中查詢是否存在相符的 Email 記錄以及IsVerified狀態
             var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == model.Email);
 
             if (member != null)
             {
-                return Ok(new { message = "YES" }); 
+                // 檢查IsVerified欄位
+                if (member.IsVerified)
+                {
+                    return Ok(new { message = "YES" });
+                }
+                else
+                {
+                    return Ok(new { message = "NoVerify" });
+                }
             }
             else
             {
-                return NotFound(new { message ="NO" });
+                return NotFound(new { message = "NO" });
             }
         }
 
@@ -58,16 +69,89 @@ namespace PrjFunNowWebApi.Controllers
         [HttpPost]
         public async Task<ActionResult<RegisterMemberDTO>> CreateMember(RegisterMemberDTO registerMember)
         {
+
+            // 儲存會員資訊
             Member members = new Member();
             members.FirstName = registerMember.FirstName;
             members.Email = registerMember.Email;
             members.Password = registerMember.Password;
             members.LastName = registerMember.LastName;
+            members.VerificationToken = Guid.NewGuid().ToString();
+            members.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(5);
+            members.IsVerified = false;
 
             _context.Members.Add(members);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("CreateMember", new { id = members.MemberId }, members);
+            // 發送驗證信
+            try
+            {
+                SendVerificationEmail(members);
+                return CreatedAtAction("CreateMember", new { id = members.MemberId }, members);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"驗證信寄送失敗! {ex.Message}");
+            }
+  
+        }
+
+        private void SendVerificationEmail(Member members)
+        {
+            string verificationUrl = $"{_configuration["AppSettings:BaseUrl"]}/api/Members/VerifyEmail?token={members.VerificationToken}";
+
+            MailMessage mail = new MailMessage
+            {
+                From = new MailAddress(_configuration["Smtp:From"]), // 添加這行來設置發件人地址
+                To = { new MailAddress(members.Email) },
+                Subject = "[系統自動發出]FunNow!點擊連結啟用您的帳號",
+                Body = $"請點擊以下連結來啟用您的帳號: {verificationUrl}",
+                IsBodyHtml = true
+            };
+
+            try
+            {
+                using (SmtpClient smtpClient = new SmtpClient(_configuration["Smtp:Host"], int.Parse(_configuration["Smtp:Port"])))
+                {
+                    smtpClient.Credentials = new System.Net.NetworkCredential(_configuration["Smtp:Username"], _configuration["Smtp:Password"]);
+                    smtpClient.EnableSsl = true;
+                    smtpClient.Send(mail);
+                }
+            }
+            catch (SmtpException smtpEx)
+            {
+                // 捕捉 SMTP 相關的異常，並記錄具體錯誤訊息
+                Console.WriteLine($"SMTP Error: {smtpEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // 捕捉所有其他異常
+                Console.WriteLine($"General Error: {ex.Message}");
+                throw;
+            }
+        }
+
+        //【Get】驗證郵件
+        [HttpGet("VerifyEmail")]
+        public async Task<IActionResult> VerifyEmail(string token)
+        {
+            var member = await _context.Members.SingleOrDefaultAsync(m => m.VerificationToken == token && m.VerificationTokenExpiry > DateTime.UtcNow);
+
+            if (member == null)
+            {
+                return BadRequest("無效的驗證碼或驗證碼已經過期");
+            }
+
+            //把資料庫的驗證狀態改為true，再把token刪掉
+            member.IsVerified = true;
+            member.VerificationToken = null;
+            member.VerificationTokenExpiry = null;
+            await _context.SaveChangesAsync();
+
+            // 重新導向至MVC專案中的/Member/Login頁面
+            string loginPageUrl = _configuration["AppSettings:MVCBaseUrl"] + "/Member/Login";
+            return Redirect(loginPageUrl);
         }
 
 

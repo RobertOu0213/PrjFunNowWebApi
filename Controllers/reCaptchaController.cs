@@ -10,7 +10,7 @@ namespace PrjFunNowWebApi.Controllers
     [ApiController]
     public class reCaptchaController : ControllerBase
     {
-        //放從GoogleDep取得的網址
+        //放從GoogleDep取得的密鑰
         private const string ReCaptchaSecret = "6Ld5o_cpAAAAAOi9Rr9zOWyRfgpXjHD5sf1mo-RM";
 
         [HttpPost("VerifyCaptcha")]
@@ -18,7 +18,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             if (string.IsNullOrEmpty(captchaRequest.Response))
             {
-                return BadRequest(new { success = false, message = "Captcha response is missing" });
+                return BadRequest(new { success = false, message = "沒拿到Captcha response" });
             }
 
             using (var client = new HttpClient())
@@ -36,12 +36,12 @@ namespace PrjFunNowWebApi.Controllers
                     }
                     else
                     {
-                        return BadRequest(new { success = false, message = "Captcha validation failed" });
+                        return BadRequest(new { success = false, message = "Captcha 驗證失敗" });
                     }
                 }
                 else
                 {
-                    return StatusCode((int)response.StatusCode, new { success = false, message = "Captcha validation request failed" });
+                    return StatusCode((int)response.StatusCode, new { success = false, message = "Captcha 驗證失敗" });
                 }
             }
         }
