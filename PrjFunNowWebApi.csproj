@@ -7,13 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Models\NewFolder\**" />
-    <Content Remove="Models\NewFolder\**" />
-    <EmbeddedResource Remove="Models\NewFolder\**" />
-    <None Remove="Models\NewFolder\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="efpt.config.json.user" />
   </ItemGroup>
 
