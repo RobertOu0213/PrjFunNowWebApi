@@ -23,9 +23,9 @@ public partial class ReportReview
 
     public string ReviewStatus { get; set; }
 
-    public int ReviewedBy { get; set; }
+    public int? ReviewedBy { get; set; }
 
-    public DateTime ReviewedAt { get; set; }
+    public DateTime? ReviewedAt { get; set; }
 
     public virtual Comment Comment { get; set; }
 

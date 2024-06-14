@@ -23,8 +23,6 @@ public partial class FunNowContext : DbContext
 
     public virtual DbSet<CommentTravelerType> CommentTravelerTypes { get; set; }
 
-    public virtual DbSet<CommentWithInfo> CommentWithInfos { get; set; }
-
     public virtual DbSet<Country> Countries { get; set; }
 
     public virtual DbSet<Coupon> Coupons { get; set; }
@@ -107,11 +105,11 @@ public partial class FunNowContext : DbContext
 
             entity.Property(e => e.CommentId).HasColumnName("CommentID");
             entity.Property(e => e.CommentStatus).IsRequired();
+            entity.Property(e => e.CommentText).IsRequired();
+            entity.Property(e => e.CommentTitle).IsRequired();
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.HotelId).HasColumnName("HotelID");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
-            entity.Property(e => e.OrderId).HasColumnName("OrderID");
-            entity.Property(e => e.RoomId).HasColumnName("RoomID");
             entity.Property(e => e.UpdatedAt).HasColumnType("datetime");
 
             entity.HasOne(d => d.Hotel).WithMany(p => p.Comments)
@@ -142,24 +140,6 @@ public partial class FunNowContext : DbContext
                 .HasForeignKey(d => d.TravelerTypeId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_CommentTravelerType_TravelerTypes");
-        });
-
-        modelBuilder.Entity<CommentWithInfo>(entity =>
-        {
-            entity
-                .HasNoKey()
-                .ToView("CommentWithInfo");
-
-            entity.Property(e => e.CommentId).HasColumnName("CommentID");
-            entity.Property(e => e.FirstName)
-                .IsRequired()
-                .HasMaxLength(100);
-            entity.Property(e => e.HotelId).HasColumnName("HotelID");
-            entity.Property(e => e.RoomId).HasColumnName("RoomID");
-            entity.Property(e => e.RoomTypeName).IsRequired();
-            entity.Property(e => e.TravelerType)
-                .IsRequired()
-                .HasMaxLength(50);
         });
 
         modelBuilder.Entity<Country>(entity =>
@@ -473,15 +453,19 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.LocationScore).HasColumnType("decimal(2, 1)");
             entity.Property(e => e.RoomId).HasColumnName("RoomID");
             entity.Property(e => e.StaffScore).HasColumnType("decimal(2, 1)");
-            entity.Property(e => e.TravelerType).HasMaxLength(50);
+            entity.Property(e => e.TravelerType)
+                .IsRequired()
+                .HasMaxLength(50);
             entity.Property(e => e.ValueScore).HasColumnType("decimal(2, 1)");
 
             entity.HasOne(d => d.Comment).WithMany(p => p.RatingScores)
                 .HasForeignKey(d => d.CommentId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RatingScores_Comments");
 
             entity.HasOne(d => d.Room).WithMany(p => p.RatingScores)
                 .HasForeignKey(d => d.RoomId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_RatingScores_Room");
         });
 

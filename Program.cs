@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PrjFunNowWebApi.Services;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-
 
 
 // 設定資料庫連線
@@ -102,8 +102,9 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// 使用 CORS 中間件
 app.UseCors("AllowAll");
+// 使用 CORS 中間件
+///app.UseCors("AllowSpecificOrigin");
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())
