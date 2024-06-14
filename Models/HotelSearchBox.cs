@@ -55,6 +55,9 @@ public partial class HotelSearchBox
 
     public int? HotelMaximumOccupancy { get; set; }
 
+    public decimal? TotalAverageScore { get; set; }
+
+
     // 解析設備名稱和房間設備名稱
     public void ParseEquipmentNames(string hotelEquipmentNames, string roomEquipmentNames)
     {

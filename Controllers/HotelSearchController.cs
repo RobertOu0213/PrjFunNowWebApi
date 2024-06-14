@@ -19,10 +19,11 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
+
         [HttpPost]
         [Route("indexsearch")]
         public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
-        {       //返回一個異步任務，結果是一個包含 HotelSearchBox 對象的集合        //參數 indexhotelSearchDTO 是從 HTTP 請求的主體中反序列化而來的，代表使用者傳遞的搜尋條件
+        {
             try
             {
                 if (indexhotelSearchDTO == null)
@@ -32,13 +33,13 @@ namespace PrjFunNowWebApi.Controllers
 
                 int totalPeople = (indexhotelSearchDTO.adults ?? 0) + (indexhotelSearchDTO.children ?? 0);
 
-                //查找在搜尋日期範圍內已有訂單的房間 ID。
+                // 查找在搜尋日期範圍內已有訂單的房間 ID。
                 var orders = await _context.OrderDetails
                     .Where(k => !(k.CheckInDate >= indexhotelSearchDTO.CheckOutDate || k.CheckOutDate <= indexhotelSearchDTO.CheckInDate))
                     .Select(k => k.RoomId)
                     .ToListAsync();
 
-                //查找所有飯店，並包含其房間、城市、國家、設備和圖片等相關信息。
+                // 查找所有飯店，並包含其房間、城市、國家、設備和圖片等相關信息。
                 var hotels = await _context.Hotels
                     .Include(h => h.Rooms)
                         .ThenInclude(r => r.RoomEquipmentReferences)
@@ -48,7 +49,7 @@ namespace PrjFunNowWebApi.Controllers
                     .Include(h => h.HotelImages)
                     .ToListAsync();
 
-                //過濾掉已被訂走的房間，並確保每個飯店有足夠的房間數和容納人數，生成包含飯店和房間的查詢結果。
+                // 過濾掉已被訂走的房間，並確保每個飯店有足夠的房間數和容納人數，生成包含飯店和房間的查詢結果。
                 var hotelsQuery = hotels
                     .AsEnumerable()
                     .Select(h => new
@@ -88,10 +89,12 @@ namespace PrjFunNowWebApi.Controllers
                                 .SelectMany(r => r.RoomEquipmentReferences)
                                 .Select(re => re.RoomEquipment.RoomEquipmentName)
                                 .Distinct()
-                                .ToList()
+                                .ToList(),
+                            TotalAverageScore = GetAverageScoreForHotel(x.Hotel.HotelId) // 调用方法获取评分
                         }
                     });
 
+                // 处理搜索关键字、价格、酒店类型等筛选条件
                 if (!string.IsNullOrEmpty(indexhotelSearchDTO.keyword))
                 {
                     hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) || s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword));
@@ -122,6 +125,7 @@ namespace PrjFunNowWebApi.Controllers
                     hotelsQuery = hotelsQuery.Where(h => h.TopRooms.Any(r => r.RoomEquipmentReferences.Any(re => indexhotelSearchDTO.RoomEquipments.Contains(re.RoomEquipment.RoomEquipmentId))));
                 }
 
+                // 添加对 TotalAverageScore 的排序
                 switch (indexhotelSearchDTO.sortBy)
                 {
                     case "LevelStar":
@@ -132,6 +136,9 @@ namespace PrjFunNowWebApi.Controllers
                         break;
                     case "CityName":
                         hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.CityName) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.CityName);
+                        break;
+                    case "TotalAverageScore":
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.TotalAverageScore) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.TotalAverageScore);
                         break;
                     default:
                         hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.HotelId) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.HotelId);
@@ -153,6 +160,37 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return StatusCode(500, "發生錯誤：" + ex.Message);
             }
+        }
+
+        private decimal? GetAverageScoreForHotel(int hotelId)
+        {
+            var ratingScores = _context.Comments
+                                       .Where(c => c.HotelId == hotelId)
+                                       .SelectMany(c => c.RatingScores)
+                                       .ToList();
+
+            if (!ratingScores.Any()) return null;
+
+            var averageScores = new
+            {
+                ComfortScore = ratingScores.Average(r => r.ComfortScore),
+                CleanlinessScore = ratingScores.Average(r => r.CleanlinessScore),
+                StaffScore = ratingScores.Average(r => r.StaffScore),
+                FacilitiesScore = ratingScores.Average(r => r.FacilitiesScore),
+                ValueScore = ratingScores.Average(r => r.ValueScore),
+                LocationScore = ratingScores.Average(r => r.LocationScore),
+                FreeWifiScore = ratingScores.Average(r => r.FreeWifiScore)
+            };
+
+            var totalAverageScore = (averageScores.ComfortScore +
+                                     averageScores.CleanlinessScore +
+                                     averageScores.StaffScore +
+                                     averageScores.FacilitiesScore +
+                                     averageScores.ValueScore +
+                                     averageScores.LocationScore +
+                                     averageScores.FreeWifiScore) / 7;
+
+            return totalAverageScore;
         }
 
         [HttpPost]
