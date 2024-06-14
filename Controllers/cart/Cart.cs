@@ -76,22 +76,7 @@ namespace PrjFunNowWebApi.Controllers.cart
 
         }
 
-        // GET: api/OrderDetails/5
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<OrderDetail>> GetOrderDetail(int? id )
-        //{
-        //    var orderDetail = await _context.OrderDetails.FindAsync(id);
-
-        //    if (orderDetail == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return orderDetail;
-        //}
-
-
-        // POST: api/OrderDetails
+     
 
 
         [HttpPost]
