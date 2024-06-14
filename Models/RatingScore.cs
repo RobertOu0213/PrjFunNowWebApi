@@ -9,23 +9,23 @@ public partial class RatingScore
 {
     public int RatingId { get; set; }
 
-    public int CommentId { get; set; }
+    public int? CommentId { get; set; }
 
-    public int RoomId { get; set; }
+    public int? RoomId { get; set; }
 
-    public decimal ComfortScore { get; set; }
+    public decimal? ComfortScore { get; set; }
 
-    public decimal CleanlinessScore { get; set; }
+    public decimal? CleanlinessScore { get; set; }
 
-    public decimal StaffScore { get; set; }
+    public decimal? StaffScore { get; set; }
 
-    public decimal FacilitiesScore { get; set; }
+    public decimal? FacilitiesScore { get; set; }
 
-    public decimal ValueScore { get; set; }
+    public decimal? ValueScore { get; set; }
 
-    public decimal LocationScore { get; set; }
+    public decimal? LocationScore { get; set; }
 
-    public decimal FreeWifiScore { get; set; }
+    public decimal? FreeWifiScore { get; set; }
 
     public string TravelerType { get; set; }
 

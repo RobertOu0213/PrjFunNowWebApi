@@ -640,23 +640,10 @@ namespace PrjFunNowWebApi.Controllers
                 return BadRequest();
             }
 
-            // 创建新的 Comment 实体
-            var newComment = new Comment
-            {
-                CommentTitle = newCommentRequest.CommentTitle,
-                CommentText = newCommentRequest.CommentText,
-                UpdatedAt = DateTime.UtcNow, // 设置更新时间
-                CommentStatus = newCommentRequest.CommentStatus
-            };
 
-            // 添加 Comment 实体到数据库
-            _context.Comments.Add(newComment);
-            await _context.SaveChangesAsync();
-
-            // 创建新的 RatingScores 实体
             var newRatingScore = new RatingScore
             {
-                CommentId = newComment.CommentId, // 获取保存后的 Comment ID
+                CommentId = newCommentRequest.CommentID,
                 RoomId = newCommentRequest.RoomID,
                 ComfortScore = newCommentRequest.ComfortScore,
                 CleanlinessScore = newCommentRequest.CleanlinessScore,
@@ -668,18 +655,45 @@ namespace PrjFunNowWebApi.Controllers
                 TravelerType = newCommentRequest.TravelerType
             };
 
-            // 添加 RatingScores 实体到数据库
             _context.RatingScores.Add(newRatingScore);
             await _context.SaveChangesAsync();
+            return Ok(newRatingScore);
+        }
+
+
+        [HttpPut("UpdateCommentStatus/{CmmentID}")]
+        public async Task<IActionResult> UpdateCommentStatus(int CmmentID, [FromBody] CommentUpdateRequest updateRequest)
+        {
+            var existingComment = await _context.Comments.FindAsync(CmmentID);
+           
+            existingComment.CommentTitle = updateRequest.CommentTitle;
+            existingComment.CommentText = updateRequest.CommentText;
+            existingComment.CommentStatus = "7";
+            existingComment.UpdatedAt = DateTime.UtcNow;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+
+            return Ok(existingComment);
+        }
+
+        public class CommentUpdateRequest
+        {
+            public string CommentStatus { get; set; }
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
             
-            return Ok(new { Comment = newComment, RatingScore = newRatingScore });
         }
 
         public class CommentRequest
         {
             public int CommentID { get; set; }
-            public string CommentTitle { get; set; }
-            public string CommentText { get; set; }
             public int RoomID { get; set; }
             public int ComfortScore { get; set; }
             public int CleanlinessScore { get; set; }
@@ -689,8 +703,8 @@ namespace PrjFunNowWebApi.Controllers
             public int LocationScore { get; set; }
             public int FreeWifiScore { get; set; }
             public string TravelerType { get; set; }
-            public DateTime UpdatedAt { get; set; }
-            public string CommentStatus { get; set; }
+            
+            
         }
 
 

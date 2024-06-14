@@ -23,7 +23,7 @@ public partial class Comment
 
     public bool IsReported { get; set; }
 
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     public int? OrderId { get; set; }
 
