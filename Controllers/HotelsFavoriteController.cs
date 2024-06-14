@@ -95,9 +95,7 @@ namespace PrjFunNowWebApi.Controllers
                 string ratingUrl = $"https://localhost:7103/api/Comment/{hotel.HotelId}/AverageScores";
                 var response = await httpClient.GetStringAsync(ratingUrl);
                 // 假设response直接返回一个评分值
-
              
-
                 hotelsWithRatings.Add(new
                 {
                     hotel.HotelId,
@@ -117,7 +115,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
         [HttpPut("{memberId}/{hotelId}")]
-        public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId,  bool likeStatus)
+        public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId, [FromBody] bool likeStatus)
         {
             Console.WriteLine($"Received request to update like status for memberId: {memberId}, hotelId: {hotelId}, likeStatus: {likeStatus}");
             var hotelLike = await _context.HotelLikes.FirstOrDefaultAsync(hl => hl.MemberId == memberId && hl.HotelId == hotelId);
@@ -144,6 +142,33 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
+        [HttpGet("like/{memberId}/{hotelId}")]
+        public async Task<IActionResult> UpdateLike(int memberId, int hotelId)
+        {
+         //   Console.WriteLine($"Received request to update like status for memberId: {memberId}, hotelId: {hotelId}, likeStatus: {likeStatus}");
+            var hotelLike = await _context.HotelLikes.FirstOrDefaultAsync(hl => hl.MemberId == memberId && hl.HotelId == hotelId);
+
+            //如果沒有hotelLike就新增
+            if (hotelLike == null)
+            {
+                hotelLike = new HotelLike
+                {
+                    MemberId = memberId,
+                    HotelId = hotelId,
+                    LikeStatus = true
+                };
+                _context.HotelLikes.Add(hotelLike);
+            }
+            else
+            {
+                //如果有hotelike就改變likestatus的狀態
+                hotelLike.LikeStatus = !hotelLike.LikeStatus;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok();
+        }
 
 
 
@@ -151,7 +176,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-     
-       
-    }
+
+
+}
 
