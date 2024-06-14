@@ -25,6 +25,12 @@ public partial class Member
 
     public string LastName { get; set; }
 
+    public string VerificationToken { get; set; }
+
+    public DateTime? VerificationTokenExpiry { get; set; }
+
+    public bool IsVerified { get; set; }
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Dialog> Dialogs { get; set; } = new List<Dialog>();
