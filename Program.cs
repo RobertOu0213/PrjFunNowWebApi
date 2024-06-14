@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+ï»¿using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -9,22 +9,22 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
-// ³]©w¸ê®Æ®w³s½u
+// è¨­å®šè³‡æ–™åº«é€£ç·š
 builder.Services.AddDbContext<FunNowContext>(
     options => options.UseSqlServer(
         builder.Configuration.GetConnectionString("FunNowConnection")
 ));
 
-// ²K¥[ CORS ªA°È
+// æ·»åŠ  CORS æœå‹™
 builder.Services.AddCors(options =>
 {
-    // ©w¸q¤¹³\©Ò¦³¨Ó·½ªºµ¦²¤
+    // å®šç¾©å…è¨±æ‰€æœ‰ä¾†æºçš„ç­–ç•¥
     options.AddPolicy("AllowAll",
         builder => builder.AllowAnyOrigin()
                           .AllowAnyHeader()
                           .AllowAnyMethod());
 
-    // ©w¸q¤¹³\¯S©w¨Ó·½ªºµ¦²¤
+    // å®šç¾©å…è¨±ç‰¹å®šä¾†æºçš„ç­–ç•¥
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins("https://localhost:7284")
                           .AllowAnyHeader()
@@ -33,20 +33,25 @@ builder.Services.AddCors(options =>
     
 });
 
-// ²K¥[ SignalR ªA°È
+// æ·»åŠ  SignalR æœå‹™
 builder.Services.AddSignalR();
+builder.Services.AddHttpClient();
 
-// ²K¥[±±¨î¾¹ªA°È
+// Add services to the container.
+
+// æ·»åŠ æ§åˆ¶å™¨æœå‹™
 builder.Services.AddControllers();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 
-// µù¥U IEmailService
+// è¨»å†Š IEmailService
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
-// ³Ğ«Ø IConfiguration ¹ê¨Ò¨Ã³]¸mÀô¹ÒÅÜ¼Æ
+// å‰µå»º IConfiguration å¯¦ä¾‹ä¸¦è¨­ç½®ç’°å¢ƒè®Šæ•¸
 var configuration = new ConfigurationBuilder()
     .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
@@ -56,15 +61,15 @@ var tkConf = builder.Configuration.GetSection("Jwt");
 
 var tokenValidationParameters = new TokenValidationParameters
 {
-    ValidateIssuer = true, //Åı¨Ï¥ÎªÌ¥i¥Hª¾¹Dµo¦æªÌ
+    ValidateIssuer = true, //è®“ä½¿ç”¨è€…å¯ä»¥çŸ¥é“ç™¼è¡Œè€…
     ValidateAudience = true,
-    ValidateLifetime = true, //¥i¥H°w¹ï¹L´Áªºtokenµ¹¤©©Úµ´
+    ValidateLifetime = true, //å¯ä»¥é‡å°éæœŸçš„tokençµ¦äºˆæ‹’çµ•
     ValidateIssuerSigningKey = true,
     ValidIssuer = tkConf["Issuer"],
     ValidAudience = tkConf["Audience"],
     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tkConf["Key"]))
 };
-// ±N IConfiguration ²K¥[¨ìªA°È®e¾¹
+// å°‡ IConfiguration æ·»åŠ åˆ°æœå‹™å®¹å™¨
 builder.Services.AddSingleton(configuration);
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -74,14 +79,36 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 
+// æ·»åŠ å†…å­˜ç¼“å­˜
+builder.Services.AddDistributedMemoryCache();
+
+// æ·»åŠ  Session æœå‹™
+builder.Services.AddSession(options =>
+{
+    // è¨­ç½® Session çš„ cookie åç¨±
+    options.Cookie.Name = ".YourApp.Session";
+
+    // è¨­ç½® Session çš„éæœŸæ™‚é–“
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+
+    // è¨­ç½® cookie æ˜¯ä¸æ˜¯åªåœ¨ HTTPS ä¸­æœ‰æ•ˆ
+    options.Cookie.HttpOnly = true;
+
+    // è¨­ç½® cookie çš„å®‰å…¨ç­‰ç´š
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+
+builder.Services.AddControllers();
+
 var app = builder.Build();
 
-// ¨Ï¥Î CORS ¤¤¶¡¥ó
+// ä½¿ç”¨ CORS ä¸­é–“ä»¶
 app.UseCors("AllowAll");
 
-// °t¸m¶}µoÀô¹Ò
+// é…ç½®é–‹ç™¼ç’°å¢ƒ
 if (app.Environment.IsDevelopment())
 {
+    app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
@@ -91,9 +118,13 @@ else
     app.UseHsts();
 }
 
+app.UseSession(); //è¨»å†ŠSession æœå‹™
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseRouting();
 
 app.UseRouting();
 app.UseAuthentication();
@@ -103,7 +134,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
-// °t¸m SignalR ºİÂI
+// é…ç½® SignalR ç«¯é»
 app.MapHub<ChatHub>("/chatHub");
 
 app.Run();

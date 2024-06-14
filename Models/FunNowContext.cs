@@ -379,7 +379,6 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.RoleId)
                 .HasDefaultValue(1)
                 .HasColumnName("RoleID");
-            entity.Property(e => e.VerificationTokenExpiry).HasColumnType("datetime");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Members)
                 .HasForeignKey(d => d.RoleId)
