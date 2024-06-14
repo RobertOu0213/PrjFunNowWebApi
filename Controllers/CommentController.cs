@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.joannaDTO;
@@ -13,6 +14,7 @@ namespace PrjFunNowWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+   
     public class CommentController : ControllerBase
     {
         private readonly FunNowContext _context;
@@ -561,6 +563,7 @@ namespace PrjFunNowWebApi.Controllers
 
         //根據會員選取未評論、尚未完成、已評論
         [HttpGet("GetCommentsByStatus/{memberId}")]
+
         public async Task<IActionResult> GetCommentsByStatus(int memberId)
         {
                var comments = await _context.Comments

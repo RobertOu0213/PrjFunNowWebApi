@@ -24,13 +24,21 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader()
                           .AllowAnyMethod());
 
-    // 定義允許特定來源的策略
+   // 定義允許特定來源的策略
     options.AddPolicy("AllowSpecificOrigin",
         builder => builder.WithOrigins("https://localhost:7284")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials());
-    
+
+
+    options.AddPolicy("AllowSpecificOrigin3",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:4200")
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
 });
 
 // 添加 SignalR 服務
@@ -104,7 +112,9 @@ var app = builder.Build();
 
 app.UseCors("AllowAll");
 // 使用 CORS 中間件
-///app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowSpecificOrigin");
+//app.UseCors("AllowSpecificOrigin3");
+
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())

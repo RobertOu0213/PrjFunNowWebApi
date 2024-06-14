@@ -22,7 +22,7 @@ namespace PrjFunNowWebApi.Controllers
 
         [HttpPost]
         [Route("indexsearch")]
-        public async Task<ActionResult<IEnumerable<HotelSearchBox>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
+        public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
         {
             try
             {
@@ -67,7 +67,7 @@ namespace PrjFunNowWebApi.Controllers
                     {
                         x.Hotel,
                         x.TopRooms,
-                        HotelSearchBox = new HotelSearchBox
+                        HotelSearchBoxDTO = new HotelSearchBoxDTO
                         {
                             HotelId = x.Hotel.HotelId,
                             HotelName = x.Hotel.HotelName,
@@ -102,7 +102,7 @@ namespace PrjFunNowWebApi.Controllers
 
                 if (indexhotelSearchDTO.lowerPrice.HasValue && indexhotelSearchDTO.upperPrice.HasValue)
                 {
-                    hotelsQuery = hotelsQuery.Where(h => h.HotelSearchBox.HotelPrice >= indexhotelSearchDTO.lowerPrice.Value && h.HotelSearchBox.HotelPrice <= indexhotelSearchDTO.upperPrice.Value);
+                    hotelsQuery = hotelsQuery.Where(h => h.HotelSearchBoxDTO.HotelPrice >= indexhotelSearchDTO.lowerPrice.Value && h.HotelSearchBoxDTO.HotelPrice <= indexhotelSearchDTO.upperPrice.Value);
                 }
 
                 if (indexhotelSearchDTO.HotelTypes != null && indexhotelSearchDTO.HotelTypes.Any())
@@ -129,23 +129,23 @@ namespace PrjFunNowWebApi.Controllers
                 switch (indexhotelSearchDTO.sortBy)
                 {
                     case "LevelStar":
-                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.LevelStar) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.LevelStar);
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.LevelStar) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.LevelStar);
                         break;
                     case "HotelPrice":
-                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.HotelPrice) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.HotelPrice);
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.HotelPrice) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.HotelPrice);
                         break;
                     case "CityName":
-                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.CityName) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.CityName);
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.CityName) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.CityName);
                         break;
                     case "TotalAverageScore":
-                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.TotalAverageScore) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.TotalAverageScore);
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.TotalAverageScore) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.TotalAverageScore);
                         break;
                     default:
-                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBox.HotelId) : hotelsQuery.OrderByDescending(s => s.HotelSearchBox.HotelId);
+                        hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.HotelId) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.HotelId);
                         break;
                 }
 
-                var hotelList = hotelsQuery.Select(x => x.HotelSearchBox).ToList();
+                var hotelList = hotelsQuery.Select(x => x.HotelSearchBoxDTO).ToList();
 
                 // 將字符串轉換為 List<string>
                 foreach (var hotel in hotelList)
