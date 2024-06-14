@@ -82,7 +82,7 @@ namespace PrjFunNowWebApi.Controllers
                             CityName = x.Hotel.City.CityName,
                             CountryName = x.Hotel.City.Country.CountryName,
                             HotelEquipmentNames = x.Hotel.HotelEquipmentReferences.Select(e => e.HotelEquipment.HotelEquipmentName).ToList(),
-                            HotelImage = x.Hotel.HotelImages.Select(img => img.HotelImage1).FirstOrDefault(),
+                            HotelImages = x.Hotel.HotelImages.Select(img => img.HotelImage1).ToList(), // 修改這行
                             HotelPrice = (int)Math.Round(x.TopRooms.Average(p => p.RoomPrice)),
                             HotelTypeId = x.Hotel.HotelTypeId,
                             RoomEquipmentNames = x.TopRooms
