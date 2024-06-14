@@ -96,6 +96,54 @@ namespace PrjFunNowWebApi.Controllers
   
         }
 
+        //【Post】重寄驗證信
+        [HttpPost("reSent")]
+        public async Task<ActionResult<EmailQueryDTO>> reSent(EmailQueryDTO resentMember)
+        {
+
+            // 在資料庫中查詢是否存在相符的 Email 記錄以及IsVerified狀態
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == resentMember.Email);
+
+            if (member != null)
+            {
+                // 檢查IsVerified欄位
+                if (member.IsVerified) //這個帳號早就驗證過了，來亂的(但基本上前端就會被擋掉)
+                {
+                    return Ok(new { message = "Done" });
+                }
+                else //這個帳號註冊過，但真的還沒驗證過
+                {
+                    // 更新會員的 VerificationToken 和 VerificationTokenExpiry
+                    member.VerificationToken = Guid.NewGuid().ToString();
+                    member.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(10);
+
+                    // 保存更改到資料庫
+                    _context.Members.Update(member);
+                    await _context.SaveChangesAsync();
+
+
+                    // 發送驗證信
+                    try
+                    {
+                        SendVerificationEmail(member);
+                        return Ok(new { message = "Success" });
+                    }
+                    catch (Exception ex)
+                    {
+                        return BadRequest($"驗證信寄送失敗! {ex.Message}");
+                    }
+                    
+                }
+            }
+            else //這個帳號根本就沒註冊過，來亂的(但基本上前端就會被擋掉)
+            {
+                return NotFound(new { message = "NOMember" }); 
+            }
+
+        }
+
+        
+        
         private void SendVerificationEmail(Member members)
         {
             string verificationUrl = $"{_configuration["AppSettings:BaseUrl"]}/api/Members/VerifyEmail?token={members.VerificationToken}";
@@ -295,7 +343,7 @@ namespace PrjFunNowWebApi.Controllers
 
             if (member == null)
             {
-                return BadRequest("無效的驗證碼或驗證碼已經過期");
+                return BadRequest("無效的驗證碼或驗證碼已經過期，請至登入頁面輸入Email，以取得重新寄發驗證信的連結");
             }
 
             //把資料庫的驗證狀態改為true，再把token刪掉
