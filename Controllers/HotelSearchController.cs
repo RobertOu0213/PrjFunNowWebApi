@@ -97,7 +97,7 @@ namespace PrjFunNowWebApi.Controllers
                 // 处理搜索关键字、价格、酒店类型等筛选条件
                 if (!string.IsNullOrEmpty(indexhotelSearchDTO.keyword))
                 {
-                    hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) || s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword));
+                    hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) || s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword)|| s.Hotel.City.CityName.Contains(indexhotelSearchDTO.keyword));
                 }
 
                 if (indexhotelSearchDTO.lowerPrice.HasValue && indexhotelSearchDTO.upperPrice.HasValue)
