@@ -39,7 +39,7 @@ public partial class HotelSearchBox
 
     public int HotelEquipmentId { get; set; }
 
-    public List<string> HotelEquipmentNames { get; set; }  // 修改為 List<string>
+    public string HotelEquipmentNames { get; set; }
 
     public string HotelImage { get; set; }
 
@@ -49,19 +49,9 @@ public partial class HotelSearchBox
 
     public int RoomEquipmentId { get; set; }
 
-    public List<string> RoomEquipmentNames { get; set; }  // 修改為 List<string>
+    public string RoomEquipmentNames { get; set; }
 
     public decimal? HotelPrice { get; set; }
 
     public int? HotelMaximumOccupancy { get; set; }
-
-    public decimal? TotalAverageScore { get; set; }
-
-
-    // 解析設備名稱和房間設備名稱
-    public void ParseEquipmentNames(string hotelEquipmentNames, string roomEquipmentNames)
-    {
-        HotelEquipmentNames = hotelEquipmentNames?.Split(new[] { ", " }, StringSplitOptions.None).ToList() ?? new List<string>();
-        RoomEquipmentNames = roomEquipmentNames?.Split(new[] { ", " }, StringSplitOptions.None).ToList() ?? new List<string>();
-    }
 }
