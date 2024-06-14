@@ -101,14 +101,14 @@ namespace PrjFunNowWebApi.Controllers
                         RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                         {
                             RatingId = r.RatingId,
-                            CommentId = r.CommentId,
-                            ComfortScore = r.ComfortScore,
-                            CleanlinessScore = r.CleanlinessScore,
-                            StaffScore = r.StaffScore,
-                            FacilitiesScore = r.FacilitiesScore,
-                            ValueScore = r.ValueScore,
-                            LocationScore = r.LocationScore,
-                            FreeWifiScore = r.FreeWifiScore,
+                            CommentId = r.CommentId ??0,
+                            ComfortScore = r.ComfortScore ?? 0,
+                            CleanlinessScore = r.CleanlinessScore ?? 0,
+                            StaffScore = r.StaffScore ?? 0,
+                            FacilitiesScore = r.FacilitiesScore ?? 0,
+                            ValueScore = r.ValueScore ?? 0,
+                            LocationScore = r.LocationScore ?? 0,
+                            FreeWifiScore = r.FreeWifiScore ?? 0,
                             TravelerType = r.TravelerType
                         }).ToList()
                     }).ToList();
@@ -181,14 +181,14 @@ namespace PrjFunNowWebApi.Controllers
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
-                                       CommentId = r.CommentId,
-                                       ComfortScore = r.ComfortScore,
-                                       CleanlinessScore = r.CleanlinessScore,
-                                       StaffScore = r.StaffScore,
-                                       FacilitiesScore = r.FacilitiesScore,
-                                       ValueScore = r.ValueScore,
-                                       LocationScore = r.LocationScore,
-                                       FreeWifiScore = r.FreeWifiScore,
+                                       CommentId = r.CommentId ?? 0,
+                                       ComfortScore = r.ComfortScore ?? 0,
+                                       CleanlinessScore = r.CleanlinessScore ?? 0,
+                                       StaffScore = r.StaffScore ?? 0,
+                                       FacilitiesScore = r.FacilitiesScore ?? 0,
+                                       ValueScore = r.ValueScore    ?? 0,
+                                       LocationScore = r.LocationScore ?? 0,
+                                       FreeWifiScore = r.FreeWifiScore ?? 0,
                                        TravelerType = r.TravelerType
                                    }).ToList()
                                }).ToListAsync();
@@ -205,14 +205,14 @@ namespace PrjFunNowWebApi.Controllers
                                    RatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                                    {
                                        RatingId = r.RatingId,
-                                       CommentId = r.CommentId,
-                                       ComfortScore = r.ComfortScore,
-                                       CleanlinessScore = r.CleanlinessScore,
-                                       StaffScore = r.StaffScore,
-                                       FacilitiesScore = r.FacilitiesScore,
-                                       ValueScore = r.ValueScore,
-                                       LocationScore = r.LocationScore,
-                                       FreeWifiScore = r.FreeWifiScore,
+                                       CommentId = r.CommentId ??0,
+                                       ComfortScore = r.ComfortScore ?? 0,
+                                       CleanlinessScore = r.CleanlinessScore ?? 0,
+                                       StaffScore = r.StaffScore ?? 0,
+                                       FacilitiesScore = r.FacilitiesScore ?? 0,
+                                       ValueScore = r.ValueScore ?? 0,
+                                       LocationScore = r.LocationScore ?? 0,
+                                       FreeWifiScore = r.FreeWifiScore ?? 0,
                                        TravelerType = r.TravelerType
                                    }).ToList()
                                }).ToListAsync();
@@ -307,7 +307,7 @@ namespace PrjFunNowWebApi.Controllers
             var averageScore = await _context.Comments
                 .Where(c => c.HotelId == hotelId)
                 .Select(c => c.RatingScores.Average(r =>
-                    (r.ComfortScore + r.CleanlinessScore + r.StaffScore + r.FacilitiesScore + r.ValueScore + r.LocationScore + r.FreeWifiScore) / 7))
+                    ((r.ComfortScore ?? 0) + (r.CleanlinessScore ?? 0) + (r.StaffScore ?? 0) + (r.FacilitiesScore ?? 0) + (r.ValueScore ?? 0) + (r.LocationScore ?? 0) + (r.FreeWifiScore ?? 0)) / 7))
                 .FirstOrDefaultAsync();
 
             if (averageScore == null)
@@ -585,14 +585,14 @@ namespace PrjFunNowWebApi.Controllers
                 MemberRatingScores = c.RatingScores.Select(r => new RatingScoreDTO
                 {
                     RatingId = r.RatingId,
-                    CommentId = r.CommentId,
-                    ComfortScore = r.ComfortScore,
-                    CleanlinessScore = r.CleanlinessScore,
-                    StaffScore = r.StaffScore,
-                    FacilitiesScore = r.FacilitiesScore,
-                    ValueScore = r.ValueScore,
-                    LocationScore = r.LocationScore,
-                    FreeWifiScore = r.FreeWifiScore,
+                    CommentId = r.CommentId ??0,
+                    ComfortScore = r.ComfortScore ?? 0,
+                    CleanlinessScore = r.CleanlinessScore ?? 0,
+                    StaffScore = r.StaffScore ?? 0,
+                    FacilitiesScore = r.FacilitiesScore ?? 0,
+                    ValueScore = r.ValueScore ?? 0,
+                    LocationScore = r.LocationScore ?? 0,
+                    FreeWifiScore = r.FreeWifiScore ?? 0,
                     TravelerType = r.TravelerType
                 }).ToList()
                 })
@@ -668,7 +668,7 @@ namespace PrjFunNowWebApi.Controllers
            
             existingComment.CommentTitle = updateRequest.CommentTitle;
             existingComment.CommentText = updateRequest.CommentText;
-            existingComment.CommentStatus = "7";
+            existingComment.CommentStatus = updateRequest.CommentStatus;
             existingComment.UpdatedAt = DateTime.UtcNow;
 
             try

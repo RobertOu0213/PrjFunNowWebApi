@@ -391,15 +391,18 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.FirstName)
                 .IsRequired()
                 .HasMaxLength(100);
+            entity.Property(e => e.IsVerified).HasColumnName("isVerified");
             entity.Property(e => e.Password)
                 .IsRequired()
                 .HasMaxLength(255);
             entity.Property(e => e.Phone)
                 .IsRequired()
-                .HasMaxLength(50);
+                .HasMaxLength(50)
+                .HasDefaultValue("尚未設定號碼");
             entity.Property(e => e.RoleId)
                 .HasDefaultValue(1)
                 .HasColumnName("RoleID");
+            entity.Property(e => e.VerificationTokenExpiry).HasColumnType("datetime");
 
             entity.HasOne(d => d.Role).WithMany(p => p.Members)
                 .HasForeignKey(d => d.RoleId)
