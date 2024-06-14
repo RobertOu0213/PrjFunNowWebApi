@@ -10,6 +10,9 @@
             public string CommentText { get; set; }
             public DateTime CreatedAt { get; set; }
             public List<RatingScoreDTO> RatingScores { get; set; }
+            public int MemberId { get; set; } // 新增 MemberId
+            public string MemberName { get; set; } // 新增 MemberName
+            public string MemberEmail { get; set; } // 新增 MemberEmail
         }
 
         public class CommentStatisticsDTO
@@ -35,5 +38,65 @@
             public decimal LocationScore { get; set; }
             public decimal FreeWifiScore { get; set; }
         }
+        public class ReportReviewFilter
+        {
+            public int? ReportTitleId { get; set; }
+            public int? ReportSubtitleId { get; set; }
+            public DateTime? StartDate { get; set; }
+            public DateTime? EndDate { get; set; }
+            public string SearchText { get; set; }
+            public List<int> ReviewStatuses { get; set; }
+        }
+        public class MemberCommentDTO
+        {
+            public int hotelId { get; set; }
+            public string hotelAddress { get; set; }
+            public string roomtypename { get; set; }
+            public DateTime? cheeckInDate { get; set; }
+            public DateTime? cheeckOutDate { get; set; }
+           
+        }
+
+        public class CommentRequest
+        {
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
+            public int RoomID { get; set; }
+            public int ComfortScore { get; set; }
+            public int CleankinessScore { get; set; }
+            public int StaffScore { get; set; }
+            public int FacilitiesScore { get; set; }
+            public int ValueScore { get; set; }
+            public int LocationScore { get; set; }
+            public int FreeWifiScore { get; set; }
+            public string TravelerType { get; set; }
+        }
+
+        public class AddComment
+        {
+            public int CommentID { get; set; }
+            public string CommentTitle { get; set; }
+            public string CommentText { get; set; }
+            public DateTime UpdatedAt { get; set; }
+            public int CommentStatus { get; set; }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
+
 }

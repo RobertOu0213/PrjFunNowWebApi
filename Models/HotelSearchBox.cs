@@ -27,6 +27,8 @@ public partial class HotelSearchBox
 
     public int MemberId { get; set; }
 
+    public int CityId { get; set; }
+
     public string CityName { get; set; }
 
     public string CommentTitle { get; set; }
@@ -35,11 +37,31 @@ public partial class HotelSearchBox
 
     public string CountryName { get; set; }
 
-    public string HotelEquipmentName { get; set; }
+    public int HotelEquipmentId { get; set; }
+
+    public List<string> HotelEquipmentNames { get; set; }  // 修改為 List<string>
 
     public string HotelImage { get; set; }
+
+    public int HotelTypeId { get; set; }
+
+    public string HotelTypeName { get; set; }
+
+    public int RoomEquipmentId { get; set; }
+
+    public List<string> RoomEquipmentNames { get; set; }  // 修改為 List<string>
 
     public decimal? HotelPrice { get; set; }
 
     public int? HotelMaximumOccupancy { get; set; }
+
+    public decimal? TotalAverageScore { get; set; }
+
+
+    // 解析設備名稱和房間設備名稱
+    public void ParseEquipmentNames(string hotelEquipmentNames, string roomEquipmentNames)
+    {
+        HotelEquipmentNames = hotelEquipmentNames?.Split(new[] { ", " }, StringSplitOptions.None).ToList() ?? new List<string>();
+        RoomEquipmentNames = roomEquipmentNames?.Split(new[] { ", " }, StringSplitOptions.None).ToList() ?? new List<string>();
+    }
 }

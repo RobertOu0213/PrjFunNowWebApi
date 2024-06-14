@@ -44,8 +44,23 @@ namespace PrjFunNowWebApi.Controllers.louie_api
 
         //要被前端呼叫的http方法----------------------------------------------------------------------------
         [HttpGet("{id}")]
-        public async Task<ActionResult<pgHotel_HotelDetailDTO>> GetHotelDetail(int id)
+        public async Task<ActionResult<pgHotel_HotelDetailDTO>> GetHotelDetail(int id, [FromQuery] string checkInDate, [FromQuery] string checkOutDate)
         {
+            if (string.IsNullOrEmpty(checkInDate) || string.IsNullOrEmpty(checkOutDate))
+            {
+                return BadRequest("Check-in and check-out dates are required.");
+            }
+
+            DateTime parsedCheckInDate;
+            DateTime parsedCheckOutDate;
+
+            if (!DateTime.TryParse(checkInDate, out parsedCheckInDate) || !DateTime.TryParse(checkOutDate, out parsedCheckOutDate))
+            {
+                return BadRequest("Invalid date format.");
+            }
+
+
+
             var hotel = await _context.Hotels
                 .Include(h => h.City)
                 .ThenInclude(c => c.Country)
@@ -65,6 +80,29 @@ namespace PrjFunNowWebApi.Controllers.louie_api
             {
                 return NotFound();
             }
+
+            var orders = await _context.OrderDetails
+        .Where(k => !(k.CheckInDate >= parsedCheckOutDate || k.CheckOutDate <= parsedCheckInDate))
+        .Select(k => k.RoomId)
+        .ToListAsync();
+
+            var availableRooms = hotel.Rooms
+                .Where(r => r.RoomStatus == true && !orders.Contains(r.RoomId))
+                .Select(r => new pgHotel_RoomDTO
+                {
+                    RoomId = r.RoomId,
+                    RoomName = r.RoomName,
+                    RoomPrice = r.RoomPrice,
+                    MaximumOccupancy = r.MaximumOccupancy,
+                    MemberID = r.MemberId,
+                    RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
+                    RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
+                    {
+                        ImageUrl = i.RoomImage1,
+                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
+                    }).ToList()
+                })
+                .ToList();
 
             var similarHotels = await _context.Hotels
                 .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id) // 根据 CityId 进行比对
@@ -117,21 +155,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     ImageUrl = i.HotelImage1,
                     ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
                 }).ToList(),
-                Rooms = hotel.Rooms.Select(r => new pgHotel_RoomDTO
-                {
-                    RoomId = r.RoomId,
-                    RoomName = r.RoomName,
-                    RoomPrice = r.RoomPrice,
-                    MaximumOccupancy = r.MaximumOccupancy,
-                    MemberID = r.MemberId,
-                    RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
-                    RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
-                    {
-                        ImageUrl = i.RoomImage1,
-                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
-                    }).ToList()
-
-                }).ToList(),
+                Rooms = availableRooms,
                 AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
                 SimilarHotels = similarHotels.ToList() // 添加相似酒店
             };
