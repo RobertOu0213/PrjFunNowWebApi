@@ -429,7 +429,8 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        [HttpPost("filter")]
+
+        [HttpPost("ReportedComment")]
         public async Task<IActionResult> GetReportReviews()
         {
             var query = _context.ReportReviews
