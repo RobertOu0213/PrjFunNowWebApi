@@ -20,8 +20,27 @@ namespace PrjFunNowWebApi.Models.louie_dto
         public decimal AverageRoomPrice { get; set; }
         //你可能喜歡
         public int CityId { get; set; } // 新增 CityId 属性
-        public List<pgHotel_SimilarHotelsDTO>? SimilarHotels { get; set; } // 新增 SimilarHotels 属性
-        public string? CheckInDate { get; set; }  // 新增
-        public string? CheckOutDate { get; set; } // 新增
+        public List<pgHotel_SimilarHotelsDTO>? SimilarHotels { get; set; } 
+        public string? CheckInDate { get; set; }  
+        public string? CheckOutDate { get; set; }
+        // 合併的圖片數據
+        public List<pgHotel_ImageDTO>? AllImages
+        {
+            get
+            {
+                var allImages = new List<pgHotel_ImageDTO>();
+                if (HotelImages != null)
+                    allImages.AddRange(HotelImages);
+                if (Rooms != null)
+                {
+                    foreach (var room in Rooms)
+                    {
+                        if (room.RoomImages != null)
+                            allImages.AddRange(room.RoomImages);
+                    }
+                }
+                return allImages;
+            }
+        }
     }
 }

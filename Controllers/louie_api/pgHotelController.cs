@@ -59,21 +59,21 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return BadRequest("Invalid date format.");
             }
 
-
-
             var hotel = await _context.Hotels
                 .Include(h => h.City)
-                .ThenInclude(c => c.Country)
+                    .ThenInclude(c => c.Country)
                 .Include(h => h.HotelEquipmentReferences)
-                .ThenInclude(r => r.HotelEquipment)
+                    .ThenInclude(r => r.HotelEquipment)
                 .Include(h => h.HotelImages)
-                .ThenInclude(img => img.ImageCategoryReferences)
+                    .ThenInclude(img => img.ImageCategoryReferences)
+                    .ThenInclude(ic => ic.ImageCategory)
                 .Include(h => h.Rooms)
-                .ThenInclude(r => r.RoomEquipmentReferences)
-                .ThenInclude(re => re.RoomEquipment)
+                    .ThenInclude(r => r.RoomEquipmentReferences)
+                    .ThenInclude(re => re.RoomEquipment)
                 .Include(h => h.Rooms)
-                .ThenInclude(r => r.RoomImages)
-                .ThenInclude(ri => ri.ImageCategoryReferences)
+                    .ThenInclude(r => r.RoomImages)
+                    .ThenInclude(ri => ri.ImageCategoryReferences)
+                    .ThenInclude(ic => ic.ImageCategory)
                 .FirstOrDefaultAsync(h => h.HotelId == id);
 
             if (hotel == null)
@@ -82,9 +82,9 @@ namespace PrjFunNowWebApi.Controllers.louie_api
             }
 
             var orders = await _context.OrderDetails
-        .Where(k => !(k.CheckInDate >= parsedCheckOutDate || k.CheckOutDate <= parsedCheckInDate))
-        .Select(k => k.RoomId)
-        .ToListAsync();
+                .Where(k => !(k.CheckInDate >= parsedCheckOutDate || k.CheckOutDate <= parsedCheckInDate))
+                .Select(k => k.RoomId)
+                .ToListAsync();
 
             var availableRooms = hotel.Rooms
                 .Where(r => r.RoomStatus == true && !orders.Contains(r.RoomId))
@@ -99,13 +99,17 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
                     {
                         ImageUrl = i.RoomImage1,
-                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
+                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
+                        ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
                     }).ToList()
                 })
                 .ToList();
 
+            // 添加房間檢查，避免計算平均價格時出錯
+            decimal averageRoomPrice = availableRooms.Any() ? availableRooms.Average(r => r.RoomPrice) : 0;
+
             var similarHotels = await _context.Hotels
-                .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id) // 根据 CityId 进行比对
+                .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id)
                 .Take(9)
                 .Select(h => new pgHotel_SimilarHotelsDTO
                 {
@@ -113,17 +117,17 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     HotelName = h.HotelName,
                     HotelAddress = h.HotelAddress,
                     LevelStar = (int)h.LevelStar,
-                    AverageRoomPrice = h.Rooms.Average(r => r.RoomPrice),
+                    AverageRoomPrice = h.Rooms.Any() ? h.Rooms.Average(r => r.RoomPrice) : 0, // 添加房間檢查，避免計算平均價格時出錯
                     AvailableRooms = h.Rooms.Count(),
                     HotelImage = h.HotelImages.Select(img => new pgHotel_ImageDTO
                     {
                         ImageUrl = img.HotelImage1,
-                        ImageCategoryID = img.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
-                    }).FirstOrDefault() // 获取第一张图片
+                        ImageCategoryID = img.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
+                        ImageCategoryName = img.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
+                    }).FirstOrDefault()
                 })
                 .ToListAsync();
 
-            // 调用另一个 API 获取评分信息并更新 similarHotels
             var tasks = similarHotels.Select(async similarHotel =>
             {
                 var averageScore = await GetHotelAverageScore(similarHotel.HotelId);
@@ -142,7 +146,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 HotelAddress = hotel.HotelAddress,
                 HotelDescription = hotel.HotelDescription,
                 CityName = hotel.City.CityName,
-                CityId = hotel.City.CityId, // 设置 CityId 属性=> 用來推薦你可能喜歡
+                CityId = hotel.City.CityId,
                 CountryName = hotel.City.Country.CountryName,
                 LevelStar = hotel.LevelStar,
                 Latitude = hotel.Latitude,
@@ -153,15 +157,17 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 HotelImages = hotel.HotelImages.Select(i => new pgHotel_ImageDTO
                 {
                     ImageUrl = i.HotelImage1,
-                    ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault()
+                    ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
+                    ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
                 }).ToList(),
                 Rooms = availableRooms,
                 AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
-                SimilarHotels = similarHotels.ToList() // 添加相似酒店
+                SimilarHotels = similarHotels.ToList()
             };
 
             return Ok(hotelDetail);
         }
+
     }
 }
 
