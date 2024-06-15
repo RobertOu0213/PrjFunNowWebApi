@@ -35,7 +35,7 @@ namespace PrjFunNowWebApi.Controllers.cart
                     .CountAsync();
 
                 var orderDetails = await _context.OrderDetails
-                    .Where(od => od.MemberId == userId)
+                    .Where(od => od.MemberId == userId && od.IsOrdered == false)
                     .Include(od => od.Room)
                         .ThenInclude(r => r.Hotel)
                             .ThenInclude(h => h.City)
