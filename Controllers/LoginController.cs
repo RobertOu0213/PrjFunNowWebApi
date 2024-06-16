@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -76,15 +77,25 @@ namespace PrjFunNowWebApi.Controllers
 
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256); //把key用 HmacSha256的方式加密
 
+            // 根據Email從資料庫中獲取對應的Member
+            var member = _context.Members.FirstOrDefault(m => m.Email == MemberEmail);
+            if (member == null)
+            {
+                throw new ArgumentException("Invalid member email");
+            }
+
+            // 創建包含Member ID的聲明
             var claims = new[]
             {
-               new Claim(ClaimTypes.NameIdentifier,MemberEmail)
+               new Claim("MemberID", member.MemberId.ToString())
             };
 
+            // 生成JWT token
             var token = new JwtSecurityToken (
-                _config.GetSection("Jwt:Issuer").Value,_config.GetSection("Jwt:Audience").Value,
+                _config.GetSection("Jwt:Issuer").Value,
+                _config.GetSection("Jwt:Audience").Value,
                 claims,
-                expires:DateTime.Now.AddMinutes(15),
+                expires:DateTime.Now.AddMinutes(60),
                 signingCredentials:credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
