@@ -104,9 +104,9 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
+//app.UseCors("AllowAll");
 // 使用 CORS 中間件
-///app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowSpecificOrigin");
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())
