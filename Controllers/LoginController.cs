@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using PrjFunNowWebApi.Models;
-using PrjFunNowWebApi.Models.DTO;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -14,7 +13,7 @@ using System.Text;
 
 namespace PrjFunNowWebApi.Controllers
 {
-    
+
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("api/[controller]")]
     [ApiController]
@@ -32,37 +31,36 @@ namespace PrjFunNowWebApi.Controllers
 
         [AllowAnonymous]
         [HttpPost]
-        public IActionResult Login([FromBody]LoginMemberDTO login)
+        public IActionResult Login([FromBody]LoginRequestt loginRequest)
         {
             //呼叫 Authenticate 方法進行帳號密碼驗證
-            bool isAuthenticated = Authenticate(login).Result;
+            bool isAuthenticated = Authenticate(loginRequest).Result;
 
             if (isAuthenticated)
             {
                 //拿到jwt Token
-                var token = GenerateToken(login.Email);
+                var token = GenerateToken(loginRequest.Email);
 
                 //拿到Member ID
-                var memberInfo = GetMemberInfo(login);
+                var memberInfo = GetMemberInfo(loginRequest);
 
                 return Ok(new { token, memberInfo });
-
             }
 
             return BadRequest("登入失敗");
         }
 
         //用來進行帳號密碼比對的方法
-        private async Task<bool> Authenticate(LoginMemberDTO login)
+        private async Task<bool> Authenticate(LoginRequestt loginRequest)
         {
             // 從 FunNowContext 中取得 Member 資料表，比對資料
-            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == login.Email);
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == loginRequest.Email);
 
             // 如果找到符合的會員資料
             if (member != null)
             {
                 // 比對密碼是否正確
-                if (member.Password == login.Password)
+                if (member.Password == loginRequest.Password)
                 {
                     return true; // 驗證成功
                 }
@@ -72,7 +70,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
         //用來產生jwt Token的方法
-        private string GenerateToken(string UserName)
+        private string GenerateToken(string MemberEmail)
         {
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config.GetSection("Jwt:Key").Value));
 
@@ -80,7 +78,7 @@ namespace PrjFunNowWebApi.Controllers
 
             var claims = new[]
             {
-               new Claim(ClaimTypes.NameIdentifier,UserName)
+               new Claim(ClaimTypes.NameIdentifier,MemberEmail)
             };
 
             var token = new JwtSecurityToken (
@@ -90,16 +88,15 @@ namespace PrjFunNowWebApi.Controllers
                 signingCredentials:credentials);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-
         }
 
-        private LoginedMemberDTO GetMemberInfo(LoginMemberDTO login)
+        private MemberInfo GetMemberInfo(LoginRequestt loginRequest)
         {
             // 根據Email從資料庫中拿到MemberID 
-            var member = _context.Members.FirstOrDefault(m => m.Email == login.Email);
+            var member = _context.Members.FirstOrDefault(m => m.Email == loginRequest.Email);
             if (member != null)
             {
-                return new LoginedMemberDTO
+                return new MemberInfo
                 {
                     MemberId = member.MemberId,
                     FirstName = member.FirstName,
@@ -116,7 +113,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //這個只是要測試JWT Token是不是有效而已
+        //這個給Angular用的
         [HttpGet]
         public IActionResult Test()
         {

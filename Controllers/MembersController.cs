@@ -143,7 +143,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         
-        
+        //驗證信內容
         private void SendVerificationEmail(Member members)
         {
             string verificationUrl = $"{_configuration["AppSettings:BaseUrl"]}/api/Members/VerifyEmail?token={members.VerificationToken}";

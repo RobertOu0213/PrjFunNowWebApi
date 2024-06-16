@@ -1,6 +1,6 @@
-﻿namespace PrjFunNowWebApi.Models.DTO
+﻿namespace PrjFunNowWebApi.Models
 {
-    public class LoginMemberDTO
+    public class LoginRequestt
     {
         public string Email { get; set; } = "";
 

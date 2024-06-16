@@ -48,7 +48,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 
-// 註冊 IEmailService
+//註冊 IEmailService
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
 // 創建 IConfiguration 實例並設置環境變數
@@ -59,6 +59,7 @@ var configuration = new ConfigurationBuilder()
     .Build();
 var tkConf = builder.Configuration.GetSection("Jwt");
 
+//JWT token用的
 var tokenValidationParameters = new TokenValidationParameters
 {
     ValidateIssuer = true, //讓使用者可以知道發行者
