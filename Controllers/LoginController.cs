@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using NuGet.Common;
 using PrjFunNowWebApi.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -22,11 +23,13 @@ namespace PrjFunNowWebApi.Controllers
     {
         private readonly IConfiguration _config;
         private readonly FunNowContext _context;
-      
+        
+
         public LoginController(IConfiguration config, FunNowContext context)
         {
             _config = config; //注入appsettings.json
             _context = context;
+           
         }
 
 
@@ -124,11 +127,46 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //這個給Angular用的
+        //這個給Angular呼叫用的API，JWT驗證+從JWT解析出MemberID
         [HttpGet]
-        public IActionResult Test()
+        [Authorize]
+        public IActionResult JWTGetData(string token)
         {
-            return Ok("Token成功驗證通過!");
+            // 從 HttpContext 獲取 Claims
+            var claims = User.Claims;
+
+            // 獲取指定類型的 Claim 值
+            var memberId = claims.FirstOrDefault(c => c.Type == "MemberID")?.Value;
+
+            return Ok($"Token 驗證通過, MemberID: {memberId}");
+        }
+
+        // 這個API用來驗證JWT並解析出PAYLOAD:DATA
+        [HttpGet("JWTGetData")]
+        public IActionResult JWTGetData2(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return BadRequest("Token is required");
+            }
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var jwtToken = tokenHandler.ReadJwtToken(token);
+                var payloadData = jwtToken.Payload;
+
+                return Ok(new
+                {
+                    Message = "Token 驗證通過",
+                    Payload = payloadData,
+                }) ;
+            }
+            catch
+            {
+                return Unauthorized("Invalid token");
+            }
         }
 
 

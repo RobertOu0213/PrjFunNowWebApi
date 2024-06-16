@@ -57,6 +57,7 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables()
     .Build();
+
 var tkConf = builder.Configuration.GetSection("Jwt");
 
 //JWT token用的
