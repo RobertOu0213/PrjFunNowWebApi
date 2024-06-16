@@ -124,7 +124,9 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                         ImageUrl = img.HotelImage1,
                         ImageCategoryID = img.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
                         ImageCategoryName = img.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
-                    }).FirstOrDefault()
+                    }).FirstOrDefault(),
+                    Latitude = h.Latitude,
+                    Longitude = h.Longitude
                 })
                 .ToListAsync();
 
