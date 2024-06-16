@@ -20,6 +20,32 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpGet]
+        [Route("suggestions")]
+        public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotelSuggestions([FromQuery] string keyword)
+        {
+            if (string.IsNullOrEmpty(keyword))
+            {
+                return BadRequest("Keyword is required.");
+            }
+
+            var suggestions = await _context.Hotels
+                .Where(h => h.HotelName.Contains(keyword) || h.City.CityName.Contains(keyword))
+                .Select(h => new HotelSearchBoxDTO
+                {
+                    HotelName = h.HotelName,
+                    CityName = h.City.CityName + ", " + h.City.Country.CountryName,
+                })
+                .Distinct()
+                .Take(10) // 限制返回的建议数量
+                .ToListAsync();
+
+            return Ok(suggestions);
+        }
+
+
+
+
         [HttpPost]
         [Route("indexsearch")]
         public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotelsByIndexSearch([FromBody] IndexHotelSearchDTO indexhotelSearchDTO)
