@@ -23,4 +23,8 @@
         public decimal FreeWifiScore { get; set; }
         public string TravelerType { get; set; }
     }
+
+
+   
+
 }

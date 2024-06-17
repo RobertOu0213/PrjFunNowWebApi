@@ -27,17 +27,57 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpGet("{hotelId}/ForHotelComment")]
+        public IActionResult GetHotelComment(int hotelId) {
+            
+            // 获取特定酒店的最新12条评论
+            var latestComments = _context.Comments
+                
+                .Where(c => c.HotelId == hotelId)
+                .Include(c => c.Member)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(6)
+                .Select(c => new {
+                    c.CommentText,
+                    c.CreatedAt,
+                    c.Member.FirstName
+
+                })
+                .ToList();
+
+            // 获取评论总数
+            var totalComments = _context.Comments.Count(c => c.HotelId == hotelId);
+            var result = new 
+            {
+                TotalComments = totalComments,
+                TopComments = latestComments
+            };
+
+            return Ok(result);
+        }
+
         //從資料庫取評論
         [HttpGet("{hotelId}/GetComments")]
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null, string sortBy = null, string topics = null)
         {
             try
             {
-                // 基本查询并包含 RatingScores 表
-                IQueryable<Comment> commentsQuery = _context.Comments
-                                                             .Where(c => c.HotelId == hotelId)
-                                                             .Include(c => c.RatingScores);
+                IQueryable<Comment> commentsQuery = from c in _context.Comments
+                                                    where c.HotelId == hotelId
+                                                    join r in _context.RatingScores on c.CommentId equals r.CommentId into ratingGroup
+                                                    join m in _context.Members on c.MemberId equals m.MemberId
+                                                    from rg in ratingGroup.DefaultIfEmpty()
+                                                    select new Comment
+                                                    {
+                                                        CommentId = c.CommentId,
+                                                        HotelId = c.HotelId,
+                                                        CommentTitle = c.CommentTitle,
+                                                        CommentText = c.CommentText,
+                                                        CreatedAt = c.CreatedAt,
+                                                        RatingScores = ratingGroup.ToList(),
+                                                    };
 
+                //commentsQuery = commentsQuery.AsNoTracking(); // 禁用跟踪
                 if (!string.IsNullOrEmpty(search))
                 {
                     commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
@@ -318,8 +358,10 @@ namespace PrjFunNowWebApi.Controllers
             }
 
             var ratingText = GetRatingText(averageScore);
+            var counts = await _context.Comments
+                .Where( c => c.HotelId == hotelId).CountAsync();
 
-            return Ok(new { HotelId = hotelId, AverageScore = averageScore, RatingText = ratingText });
+            return Ok(new { HotelId = hotelId, AverageScore = averageScore, RatingText = ratingText ,Counts = counts });
         }
 
         private string GetRatingText(decimal averageScore)
