@@ -65,6 +65,24 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        //根據Email傳回memberID
+        [HttpPost("returnID")]
+        public async Task<IActionResult> QueryEmailReturnID([FromBody] EmailQueryDTO model)
+        {
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == model.Email);
+            if (member != null)
+            {
+                return Ok(new { memberId = member.MemberId });
+
+            }
+            else
+            {
+                return NotFound(new { message = "NO" });
+            }
+        }
+
+
+
         //【Post】新增會員
         [HttpPost]
         public async Task<ActionResult<RegisterMemberDTO>> CreateMember(RegisterMemberDTO registerMember)
@@ -143,7 +161,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         
-        
+        //驗證信內容
         private void SendVerificationEmail(Member members)
         {
             string verificationUrl = $"{_configuration["AppSettings:BaseUrl"]}/api/Members/VerifyEmail?token={members.VerificationToken}";
@@ -358,7 +376,9 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //【Put】修改會員資料
+        
+
+        //【Put】修改會員全部資料
         [HttpPut("{id}")]
         public async Task<IActionResult> EditMember(int id, EditMemberDTO editMember)
         {

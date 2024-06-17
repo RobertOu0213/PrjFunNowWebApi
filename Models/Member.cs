@@ -11,6 +11,8 @@ public partial class Member
 
     public string FirstName { get; set; }
 
+    public string LastName { get; set; }
+
     public string Email { get; set; }
 
     public string Password { get; set; }
@@ -23,13 +25,15 @@ public partial class Member
 
     public string Image { get; set; }
 
-    public string LastName { get; set; }
-
     public string VerificationToken { get; set; }
 
     public DateTime? VerificationTokenExpiry { get; set; }
 
     public bool IsVerified { get; set; }
+
+    public string Otpcode { get; set; }
+
+    public DateTime? Otpexpiry { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
