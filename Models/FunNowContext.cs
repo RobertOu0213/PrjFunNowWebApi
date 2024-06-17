@@ -370,6 +370,10 @@ public partial class FunNowContext : DbContext
             entity.Property(e => e.Birthday).HasColumnType("date");
             entity.Property(e => e.Email).IsRequired();
             entity.Property(e => e.FirstName).IsRequired();
+            entity.Property(e => e.Otpcode).HasColumnName("OTPCode");
+            entity.Property(e => e.Otpexpiry)
+                .HasColumnType("datetime")
+                .HasColumnName("OTPExpiry");
             entity.Property(e => e.Password).IsRequired();
             entity.Property(e => e.Phone)
                 .IsRequired()

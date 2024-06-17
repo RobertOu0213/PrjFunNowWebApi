@@ -24,9 +24,45 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
             _configuration = configuration;
              
-    }
+        }
 
-        //【寄OTPEmail的功能】
+        //修改密碼
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditPassword(int id, EditPwdDTO editPwd)
+        {
+            var member = await _context.Members.FindAsync(id);
+            if (member == null)
+            {
+                return BadRequest("一開始資料庫就沒有這個會員");
+            }
+
+            member.Password = editPwd.Password;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MemberExists(id))
+                {
+                    return BadRequest("你在把更新資料存進資料庫時找不到這個會員了");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok("密碼修改成功");
+        }
+
+        private bool MemberExists(int id)
+        {
+            return _context.Members.Any(e => e.MemberId == id);
+        }
+
+        //【單純寄OTPEmail的功能】
         [HttpPost("send-otp")]
         public async Task<IActionResult> SendOtp([FromBody] EmailQueryDTO request)
         {
@@ -48,7 +84,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //【驗證OTP碼的功能】
+        //【驗證OTP碼是不是有效的功能】
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request)
         {
@@ -59,13 +95,17 @@ namespace PrjFunNowWebApi.Controllers
             }
             else if (otpRecord.Otpexpiry < DateTime.UtcNow) //驗證碼過期了
             {
-                _context.Members.Remove(otpRecord); //刪掉舊的
+                otpRecord.Otpcode = null; //將 OTP code 設為 null
+                otpRecord.Otpexpiry = null;
+                _context.Members.Update(otpRecord);
                 await _context.SaveChangesAsync();
                 return BadRequest(new { message = "OTP expired" });
             }
             else //輸入的驗證碼相同
             {
-                _context.Members.Remove(otpRecord); //只用一次所以要刪掉
+                otpRecord.Otpcode = null; //將 OTP code 設為 null
+                otpRecord.Otpexpiry = null;
+                _context.Members.Update(otpRecord);
                 await _context.SaveChangesAsync();
                 return Ok("OTP verified");
             }
