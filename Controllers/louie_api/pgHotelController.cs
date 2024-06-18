@@ -86,27 +86,25 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 .Select(k => k.RoomId)
                 .ToListAsync();
 
-            var availableRooms = hotel.Rooms
-                .Where(r => r.RoomStatus == true && !orders.Contains(r.RoomId))
-                .Select(r => new pgHotel_RoomDTO
+            var rooms = hotel.Rooms.Select(r => new pgHotel_RoomDTO
+            {
+                RoomId = r.RoomId,
+                RoomName = r.RoomName,
+                RoomPrice = r.RoomPrice,
+                MaximumOccupancy = r.MaximumOccupancy,
+                MemberID = r.MemberId,
+                RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
+                RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
                 {
-                    RoomId = r.RoomId,
-                    RoomName = r.RoomName,
-                    RoomPrice = r.RoomPrice,
-                    MaximumOccupancy = r.MaximumOccupancy,
-                    MemberID = r.MemberId,
-                    RoomEquipments = r.RoomEquipmentReferences.Select(e => e.RoomEquipment.RoomEquipmentName).ToList(),
-                    RoomImages = r.RoomImages.Select(i => new pgHotel_ImageDTO
-                    {
-                        ImageUrl = i.RoomImage1,
-                        ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
-                        ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
-                    }).ToList()
-                })
-                .ToList();
+                    ImageUrl = i.RoomImage1,
+                    ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
+                    ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
+                }).ToList(),
+                IsBooked = orders.Contains(r.RoomId)
+            }).ToList();
 
             // 添加房間檢查，避免計算平均價格時出錯
-            decimal averageRoomPrice = availableRooms.Any() ? availableRooms.Average(r => r.RoomPrice) : 0;
+            decimal averageRoomPrice = rooms.Any(r => !r.IsBooked) ? rooms.Where(r => !r.IsBooked).Average(r => r.RoomPrice) : 0;
 
             var similarHotels = await _context.Hotels
                 .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id)
@@ -162,7 +160,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     ImageCategoryID = i.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
                     ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
                 }).ToList(),
-                Rooms = availableRooms,
+                Rooms = rooms,
                 AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
                 SimilarHotels = similarHotels.ToList()
             };
