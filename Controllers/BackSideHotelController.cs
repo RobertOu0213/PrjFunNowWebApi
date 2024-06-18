@@ -155,12 +155,12 @@ namespace PrjFunNowWebApi.Controllers
 
         // 此方法獲取所有飯店的詳細信息
         [HttpGet("details")]
-        public async Task<ActionResult> GetHotelDetails()
+        public async Task<ActionResult> GetHotelDetails([FromQuery] string searchTerm = "")
         {
             try
             {
                 var query = _context.Hotels
-                    .Include(h => h.Rooms)  // 確保包含關聯的房間信息
+                    .Include(h => h.Rooms)  // 确保包含关联的房间信息
                     .Select(hotel => new
                     {
                         HotelID = hotel.HotelId,
@@ -168,21 +168,30 @@ namespace PrjFunNowWebApi.Controllers
                         HotelAddress = hotel.HotelAddress,
                         HotelPhone = hotel.HotelPhone,
                         HotelIsActive = hotel.IsActive,
-                        HotelTypeName = hotel.HotelType.HotelTypeName,  // 加入HotelType的名稱
-                        Rooms = hotel.Rooms.Select(room => new  // 選擇關聯的房間訊息
+                        HotelTypeName = hotel.HotelType.HotelTypeName,  // 加入HotelType的名称
+                        Rooms = hotel.Rooms.Select(room => new  // 选择关联的房间信息
                         {
                             RoomID = room.RoomId,
                             RoomName = room.RoomName,
                             RoomPrice = room.RoomPrice,
                             Description = room.Description,
-                            RoomType = room.RoomType.RoomTypeName,  // 假設你有RoomType實體且它關聯到Room
+                            RoomType = room.RoomType.RoomTypeName,  // 假设你有RoomType实体且它关联到Room
                             RoomStatus = room.RoomStatus,
                             RoomSize = room.RoomSize,
                             MaximumOccupancy = room.MaximumOccupancy
                         }).ToList()
                     });
 
-                // 執行查詢並將结果轉換為列表
+                // 如果提供了搜索词，则过滤查询结果
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    searchTerm = searchTerm.ToLower();
+                    query = query.Where(hotel =>
+                        hotel.HotelName.ToLower().Contains(searchTerm) ||
+                        hotel.HotelAddress.ToLower().Contains(searchTerm));
+                }
+
+                // 执行查询并将结果转换为列表
                 var result = await query.ToListAsync();
 
                 if (result == null || !result.Any())
@@ -190,7 +199,7 @@ namespace PrjFunNowWebApi.Controllers
                     return NotFound("No hotels found.");
                 }
 
-                // 返回查詢結果
+                // 返回查询结果
                 return Ok(result);
             }
             catch (Exception ex)
@@ -198,6 +207,7 @@ namespace PrjFunNowWebApi.Controllers
                 return StatusCode(500, "Internal server error while retrieving hotel details.");
             }
         }
+
 
         // 根據 HotelTypeID 或 HotelTypeName 查詢飯店
         [HttpGet]
