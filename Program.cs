@@ -8,12 +8,9 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 // 設定資料庫連線
-builder.Services.AddDbContext<FunNowContext>(
-    options => options.UseSqlServer(
-        builder.Configuration.GetConnectionString("FunNowConnection")
-));
+builder.Services.AddDbContext<FunNowContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("FunNowConnection")));
 
 // 添加 CORS 服務
 builder.Services.AddCors(options =>
@@ -30,23 +27,28 @@ builder.Services.AddCors(options =>
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials());
-    
 });
 
 // 添加 SignalR 服務
 builder.Services.AddSignalR();
-builder.Services.AddHttpClient();
 
-// Add services to the container.
+// 添加 HttpClient 服務
+builder.Services.AddHttpClient();
 
 // 添加控制器服務
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+// 添加 Swagger 相關服務
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddHttpClient();
 
+// 註冊 KeyVaultService 和 EmailService
+builder.Services.AddScoped<IKeyVaultService, KeyVaultService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 
 //註冊 IEmailService
@@ -64,23 +66,24 @@ var tkConf = builder.Configuration.GetSection("Jwt");
 //JWT token用的
 var tokenValidationParameters = new TokenValidationParameters
 {
-    ValidateIssuer = true, //讓使用者可以知道發行者
+    ValidateIssuer = true,
     ValidateAudience = true,
-    ValidateLifetime = true, //可以針對過期的token給予拒絕
+    ValidateLifetime = true,
     ValidateIssuerSigningKey = true,
     ValidIssuer = tkConf["Issuer"],
     ValidAudience = tkConf["Audience"],
     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tkConf["Key"]))
 };
+
 // 將 IConfiguration 添加到服務容器
 builder.Services.AddSingleton(configuration);
 
+// 設定 JWT Bearer 身份驗證
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(o =>
     {
         o.TokenValidationParameters = tokenValidationParameters;
     });
-
 
 // 添加内存缓存
 builder.Services.AddDistributedMemoryCache();
@@ -101,20 +104,20 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
-builder.Services.AddControllers();
-
 var app = builder.Build();
 
-//app.UseCors("AllowAll");
 // 使用 CORS 中間件
 app.UseCors("AllowSpecificOrigin");
 
-// 配置開發環境
+// 配置開發環境和生產環境
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
+    });
 }
 else
 {
@@ -122,14 +125,11 @@ else
     app.UseHsts();
 }
 
-app.UseSession(); //註冊Session 服務
-app.UseHttpsRedirection();
-app.UseStaticFiles();
+// 註冊 Session 服務
+app.UseSession();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRouting();
-
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
