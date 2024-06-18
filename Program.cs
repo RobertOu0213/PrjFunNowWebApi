@@ -36,11 +36,11 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
 // 添加控制器服務
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-    });
+builder.Services.AddControllers();
+    //.AddJsonOptions(options =>
+    //{
+    //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    //});
 
 // 添加 Swagger 相關服務
 builder.Services.AddEndpointsApiExplorer();
@@ -51,8 +51,6 @@ builder.Services.AddScoped<IKeyVaultService, KeyVaultService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 
-//註冊 IEmailService
-builder.Services.AddSingleton<IEmailService, EmailService>();
 
 // 創建 IConfiguration 實例並設置環境變數
 var configuration = new ConfigurationBuilder()
