@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.DTO;
 using PrjFunNowWebApi.Models.joannaDTO;
 using System.ComponentModel.Design;
 using System.Globalization;
@@ -497,6 +498,8 @@ namespace PrjFunNowWebApi.Controllers
                 r.ReviewStatus,
                 r.ReviewedBy,
                 r.ReviewedAt,
+                r.Comment.CommentTitle,
+                r.Comment.CommentText,
           
             }).ToListAsync();
 
@@ -756,6 +759,19 @@ namespace PrjFunNowWebApi.Controllers
             
         }
 
+        [HttpGet("GetCHotelUrl")]
+        public IActionResult GetHotelImages()
+        {
+            var hotelImages = _context.HotelImages.ToList();
+            var hotelImagesDto = hotelImages.Select(hi => new HotelImageDto
+            {
+                HotelId = hi.HotelId,
+                HotelImageName = hi.HotelImage1,
+                HotelImageUrl = $"{Request.Scheme}://{Request.Host}/images/{hi.HotelImage1}"
+            });
+
+            return Ok(hotelImagesDto);
+        }
 
     }
 }
