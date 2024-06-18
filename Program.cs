@@ -51,8 +51,6 @@ builder.Services.AddScoped<IKeyVaultService, KeyVaultService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 
 
-//註冊 IEmailService
-builder.Services.AddSingleton<IEmailService, EmailService>();
 
 // 創建 IConfiguration 實例並設置環境變數
 var configuration = new ConfigurationBuilder()
