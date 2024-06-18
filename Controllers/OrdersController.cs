@@ -68,6 +68,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             return _context.Orders.Any(e => e.OrderId == id);
         }
+
         // GET: api/Orders/ByMemberAndStatus/{memberId}/{orderStatusId}/{pageNumber}/{pageSize}
         [HttpGet("ByMemberAndStatus/{memberId}/{orderStatusId}/{pageNumber}/{pageSize}")]
         public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrdersByMemberAndStatus(int memberId, int orderStatusId, int pageNumber, int pageSize)
@@ -123,5 +124,60 @@ namespace PrjFunNowWebApi.Controllers
             });
         }
 
+        // GET: api/Orders/ByOrderId/{orderId}
+        [HttpGet("ByOrderId/{orderId}")]
+        public async Task<ActionResult<OrderDTO>> GetOrderByOrderId(int orderId)
+        {
+            var order = await _context.Orders
+                                      .Where(o => o.OrderId == orderId)
+                                      .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            var orderDetails = await _context.OrderDetails
+                                             .Where(od => od.OrderId == orderId)
+                                             .Include(od => od.Room)
+                                             .ThenInclude(r => r.Hotel)
+                                             .ThenInclude(h => h.HotelImages)
+                                             .Include(od => od.Room.RoomType) // 新增
+                                             .Include(od => od.Room.RoomImages) // 新增
+                                             .Include(od => od.Room.RoomEquipmentReferences)
+                                                 .ThenInclude(re => re.RoomEquipment) // 新增
+                                             .ToListAsync();
+
+            var orderDTO = new OrderDTO
+            {
+                OrderId = order.OrderId,
+                OrderStatusId = order.OrderStatusId,
+                TotalPrice = order.TotalPrice,
+                CreatedAt = order.CreatedAt,
+                GuestLastName = order.GuestLastName,
+                GuestFirstName = order.GuestFirstName,
+                GuestEmail = order.GuestEmail,
+                OrderDetails = orderDetails.Select(od => new OrderDetailDTO
+                {
+                    OrderDetailId = od.OrderDetailId,
+                    RoomID = od.RoomId,
+                    CheckInDate = od.CheckInDate,
+                    CheckOutDate = od.CheckOutDate,
+                    HotelID = od.Room.Hotel.HotelId,
+                    HotelName = od.Room.Hotel.HotelName,
+                    HotelAddress = od.Room.Hotel.HotelAddress,
+                    HotelPhone = od.Room.Hotel.HotelPhone,
+                    HotelTypeName = od.Room.Hotel.HotelType?.HotelTypeName, // 新增
+                    HotelImages = od.Room.Hotel.HotelImages?.Select(hi => hi.HotelImage1).ToList() ?? new List<string>(),
+                    RoomTypeName = od.Room.RoomType?.RoomTypeName, // 新增
+                    RoomImages = od.Room.RoomImages?.Select(ri => ri.RoomImage1).ToList() ?? new List<string>(), // 新增
+                    RoomEquipmentNames = od.Room.RoomEquipmentReferences?
+                                                 .Select(re => re.RoomEquipment.RoomEquipmentName)
+                                                 .ToList() ?? new List<string>() // 新增
+                }).ToList()
+            };
+
+            return Ok(orderDTO);
+        }
     }
 }
