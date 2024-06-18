@@ -36,7 +36,7 @@
 
         public List<string> HotelEquipmentNames { get; set; }  // 修改為 List<string>
 
-        public string HotelImage { get; set; }
+        public List<string> HotelImages { get; set; } // 新增這行
 
         public int HotelTypeId { get; set; }
 
