@@ -36,11 +36,11 @@ builder.Services.AddSignalR();
 builder.Services.AddHttpClient();
 
 // 添加控制器服務
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
-    });
+builder.Services.AddControllers();
+//    .AddJsonOptions(options =>
+//    {
+//        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+//    });
 
 // 添加 Swagger 相關服務
 builder.Services.AddEndpointsApiExplorer();
