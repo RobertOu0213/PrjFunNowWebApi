@@ -19,6 +19,8 @@
         public string RoomImage { get; set; }
 
         public int OrderDetailID { get; set; }
-
+        public int HotelID { get; set; }
+        public double AverageScore { get; set; }
+        public string RatingText { get; set; }
     }
 }
