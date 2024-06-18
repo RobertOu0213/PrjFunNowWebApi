@@ -21,6 +21,43 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
+
+        // 获取特定酒店的所有房间信息
+        [HttpGet("{hotelId}/rooms")]
+        public async Task<ActionResult> GetRoomsByHotelId(int hotelId)
+        {
+            try
+            {
+                // 获取指定酒店的房间信息
+                var rooms = await _context.Rooms
+                    .Where(r => r.HotelId == hotelId)
+                    .Select(room => new
+                    {
+                        RoomID = room.RoomId,
+                        RoomName = room.RoomName,
+                        RoomPrice = room.RoomPrice,
+                        Description = room.Description,
+                        RoomType = room.RoomType.RoomTypeName,
+                        RoomStatus = room.RoomStatus,
+                        RoomSize = room.RoomSize,
+                        MaximumOccupancy = room.MaximumOccupancy
+                    })
+                    .ToListAsync();
+
+                if (rooms == null || !rooms.Any())
+                {
+                    return NotFound("No rooms found for the specified hotel.");
+                }
+
+                return Ok(rooms);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error while retrieving rooms for hotel ID {hotelId}: {ex.Message}");
+            }
+        }
+
+
         // 此方法根據房間ID獲取飯店信息
         [HttpGet("rooms/{roomId}")]
         public async Task<ActionResult> GetHotelByRoomId(int roomId)
