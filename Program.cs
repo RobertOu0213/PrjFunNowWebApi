@@ -48,6 +48,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 
+
 //註冊 IEmailService
 builder.Services.AddSingleton<IEmailService, EmailService>();
 

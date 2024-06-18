@@ -46,9 +46,9 @@ namespace PrjFunNowWebApi.Controllers
                 var token = GenerateToken(loginRequest.Email);
 
                 //拿到Member ID
-                var memberInfo = GetMemberInfo(loginRequest);
+                var memberID = GetMemberID(loginRequest);
 
-                return Ok(new { token, memberInfo });
+                return Ok(new { token, memberID });
             }
 
             return BadRequest("登入失敗");
@@ -104,26 +104,16 @@ namespace PrjFunNowWebApi.Controllers
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private MemberInfo GetMemberInfo(LoginRequestt loginRequest)
+        private int GetMemberID(LoginRequestt loginRequest)
         {
             // 根據Email從資料庫中拿到MemberID 
             var member = _context.Members.FirstOrDefault(m => m.Email == loginRequest.Email);
             if (member != null)
             {
-                return new MemberInfo
-                {
-                    MemberId = member.MemberId,
-                    FirstName = member.FirstName,
-                    Email = member.Email,
-                    Password = member.Password,
-                    Phone = member.Phone,
-                    Birthday = member.Birthday,
-                    RoleId = member.RoleId,
-                    Image = member.Image,
-                    LastName = member.LastName,
-                };
+                return member.MemberId;
+                
             }
-            return null;
+            return 0;
         }
 
 
