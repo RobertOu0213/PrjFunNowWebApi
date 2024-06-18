@@ -31,6 +31,10 @@ public partial class Member
 
     public bool IsVerified { get; set; }
 
+    public string Otpcode { get; set; }
+
+    public DateTime? Otpexpiry { get; set; }
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Dialog> Dialogs { get; set; } = new List<Dialog>();
