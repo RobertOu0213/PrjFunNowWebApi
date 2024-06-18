@@ -683,7 +683,7 @@ namespace PrjFunNowWebApi.Controllers
            }
 
 
-        //填寫評論表單、新增到DB
+        //填寫評論表單、新增DB
         [HttpPost("AddComment")]
         public async Task<IActionResult> AddComment([FromBody] CommentRequest newCommentRequest)
         {
