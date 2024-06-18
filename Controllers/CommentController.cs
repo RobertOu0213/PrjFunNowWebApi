@@ -755,24 +755,9 @@ namespace PrjFunNowWebApi.Controllers
             public int LocationScore { get; set; }
             public int FreeWifiScore { get; set; }
             public string TravelerType { get; set; }
-            
-            
+
+
         }
-
-        [HttpGet("GetCHotelUrl")]
-        public IActionResult GetHotelImages()
-        {
-            var hotelImages = _context.HotelImages.ToList();
-            var hotelImagesDto = hotelImages.Select(hi => new HotelImageDto
-            {
-                HotelId = hi.HotelId,
-                HotelImageName = hi.HotelImage1,
-                HotelImageUrl = $"{Request.Scheme}://{Request.Host}/images/{hi.HotelImage1}"
-            });
-
-            return Ok(hotelImagesDto);
-        }
-
     }
 }
 
