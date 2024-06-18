@@ -369,7 +369,7 @@ namespace PrjFunNowWebApi.Controllers
         {
             if (averageScore >= 9)
             {
-                return "超讚";
+                return "超讚！";
             }
             else if (averageScore >= 7)
             {
