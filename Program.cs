@@ -48,7 +48,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient();
 
 
-// 註冊 IEmailService
+//註冊 IEmailService
 builder.Services.AddSingleton<IEmailService, EmailService>();
 
 // 創建 IConfiguration 實例並設置環境變數
@@ -57,8 +57,10 @@ var configuration = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddEnvironmentVariables()
     .Build();
+
 var tkConf = builder.Configuration.GetSection("Jwt");
 
+//JWT token用的
 var tokenValidationParameters = new TokenValidationParameters
 {
     ValidateIssuer = true, //讓使用者可以知道發行者
@@ -102,9 +104,9 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-app.UseCors("AllowAll");
+//app.UseCors("AllowAll");
 // 使用 CORS 中間件
-///app.UseCors("AllowSpecificOrigin");
+app.UseCors("AllowSpecificOrigin");
 
 // 配置開發環境
 if (app.Environment.IsDevelopment())

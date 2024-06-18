@@ -1,6 +1,6 @@
-﻿namespace PrjFunNowWebApi.Models.DTO
+﻿namespace PrjFunNowWebApi.Models
 {
-    public class LoginedMemberDTO
+    public class MemberInfo
     {
         public int MemberId { get; set; }
 
