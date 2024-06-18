@@ -21,6 +21,23 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
+        // 更新飯店的isActive狀態
+        [HttpPut("{hotelId}/toggleActive")]
+        public async Task<IActionResult> ToggleHotelActiveStatus(int hotelId)
+        {
+            var hotel = await _context.Hotels.FindAsync(hotelId);
+            if (hotel == null)
+            {
+                return NotFound();
+            }
+
+            hotel.IsActive = !hotel.IsActive; // 切换isActive状态
+
+            _context.Entry(hotel).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
 
         // 获取特定酒店的所有房间信息
         [HttpGet("{hotelId}/rooms")]
