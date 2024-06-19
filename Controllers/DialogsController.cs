@@ -51,6 +51,13 @@ namespace PrjFunNowWebApi.Controllers
 
             var result = new List<DialogWithHotelInfoDto>();
 
+            var member = await _context.Members
+                .Include(m => m.Hotels)
+                .ThenInclude(h => h.HotelImages)
+                .FirstOrDefaultAsync(m => m.MemberId == memberId);
+
+            var memberHotel = member?.Hotels.FirstOrDefault();
+
             foreach (var dialog in dialogs)
             {
                 var relatedMemberId = dialog.MemberId == memberId ? dialog.CalltoMemberId : dialog.MemberId;
@@ -73,9 +80,38 @@ namespace PrjFunNowWebApi.Controllers
                     HotelImage = relatedHotel?.HotelImages.FirstOrDefault()?.HotelImage1,
                     MemberImage = relatedMember?.Image,
                     FirstName = relatedMember?.FirstName,
-                    LastName = relatedMember?.LastName
+                    LastName = relatedMember?.LastName,
+                    MemberHotelName = memberHotel?.HotelName,
+                    MemberHotelAddress = memberHotel?.HotelAddress
                 });
             }
+
+            if (result.Count == 0)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
+        }
+
+        // 新增的 API: 根據 memberId、calltoMemberId 和 createAt 獲取對話信息
+        [HttpGet("byMemberAndDate")]
+        public async Task<ActionResult<IEnumerable<DialogWithHotelInfoDto>>> GetDialogsByMemberAndDate(int memberId, int calltoMemberId, DateTime createAt)
+        {
+            var dialogs = await _context.Dialogs
+                .Where(d =>
+                    (d.MemberId == memberId && d.CalltoMemberId == calltoMemberId && d.CreateAt.Date == createAt.Date) ||
+                    (d.MemberId == calltoMemberId && d.CalltoMemberId == memberId && d.CreateAt.Date == createAt.Date))
+                .ToListAsync();
+
+            var result = dialogs.Select(d => new DialogWithHotelInfoDto
+            {
+                DialogId = d.DialogId,
+                MemberId = d.MemberId,
+                Detail = d.Detail,
+                CalltoMemberId = d.CalltoMemberId,
+                CreateAt = d.CreateAt
+            }).ToList();
 
             if (result.Count == 0)
             {
