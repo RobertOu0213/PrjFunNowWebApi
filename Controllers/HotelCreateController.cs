@@ -51,8 +51,8 @@ namespace PrjFunNowWebApi.Controllers
                         CityId = Convert.ToInt32(hotel.CityId),
                         HotelTypeId = Convert.ToInt32(hotel.TypeID),
                         LevelStar = Convert.ToInt32(hotel.LevelStar),
-                        Latitude = null,
-                        Longitude = null,
+                        Latitude = hotel.Latitude,
+                        Longitude = hotel.Longitude,
                         IsActive = false,
                         MemberId = MemberId
                     };
