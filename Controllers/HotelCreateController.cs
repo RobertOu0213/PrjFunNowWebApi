@@ -31,7 +31,7 @@ namespace PrjFunNowWebApi.Controllers
 
         // POST: api/HotelCreate
         [HttpPost]
-        public async Task<ActionResult> PostHotel([FromForm] string hotelData, [FromForm] string roomData)
+        public async Task<ActionResult> PostHotel([FromForm] string hotelData, [FromForm] string roomData, [FromForm] int MemberId)
         {
 
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -51,10 +51,10 @@ namespace PrjFunNowWebApi.Controllers
                         CityId = Convert.ToInt32(hotel.CityId),
                         HotelTypeId = Convert.ToInt32(hotel.TypeID),
                         LevelStar = Convert.ToInt32(hotel.LevelStar),
-                        Latitude = null,
-                        Longitude = null,
+                        Latitude = hotel.Latitude,
+                        Longitude = hotel.Longitude,
                         IsActive = false,
-                        MemberId = 1
+                        MemberId = MemberId
                     };
                     _context.Hotels.Add(newHotel);
                     await _context.SaveChangesAsync();
@@ -138,7 +138,7 @@ namespace PrjFunNowWebApi.Controllers
                             RoomPrice = Convert.ToDecimal(room.RoomPrice),
                             RoomTypeId = Convert.ToInt32(room.RoomTypeID),
                             Description = room.Description,
-                            MemberId = 1,
+                            MemberId = MemberId,
                             RoomStatus = true
 
                         };

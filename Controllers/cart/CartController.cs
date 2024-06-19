@@ -64,7 +64,8 @@ namespace PrjFunNowWebApi.Controllers.cart
                     MaximumOccupancy = od.Room?.MaximumOccupancy ?? 0,
                     AllOrderDetailsCount = allOrderDetailsCount,
                     RoomImage = od.Room?.RoomImages?.FirstOrDefault()?.RoomImage1,
-                    HotelID = od.Room?.Hotel?.HotelId ?? 0
+                    HotelID = od.Room?.Hotel?.HotelId ?? 0,
+                    GuestNumber = od.GuestNumber
                 }).ToList();
 
                 return Ok(new { success=true, orderDetailDtos});
@@ -78,8 +79,6 @@ namespace PrjFunNowWebApi.Controllers.cart
         }
 
      
-
-
         [HttpPost]
         public async Task<ActionResult<OrderDetail>> PostOrderDetail(OrderDetail orderDetail)
         {
@@ -87,6 +86,7 @@ namespace PrjFunNowWebApi.Controllers.cart
             {
                 orderDetail.CreatedAt = DateTime.Now;
                 orderDetail.IsOrdered = false;
+
                 _context.OrderDetails.Add(orderDetail);
                 await _context.SaveChangesAsync();
 

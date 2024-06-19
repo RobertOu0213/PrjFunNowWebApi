@@ -20,7 +20,7 @@
 
         public int OrderDetailID { get; set; }
         public int HotelID { get; set; }
-        public double AverageScore { get; set; }
-        public string RatingText { get; set; }
+        
+        public int? GuestNumber { get; set; }
     }
 }
