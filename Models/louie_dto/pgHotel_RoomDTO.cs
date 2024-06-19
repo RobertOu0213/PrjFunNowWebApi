@@ -9,5 +9,6 @@
         public int MemberID { get; set; }
         public List<string>? RoomEquipments { get; set; }
         public List<pgHotel_ImageDTO>? RoomImages { get; set; }
+        public bool IsBooked { get; set; }
     }
 }

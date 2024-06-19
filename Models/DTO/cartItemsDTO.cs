@@ -19,6 +19,8 @@
         public string RoomImage { get; set; }
 
         public int OrderDetailID { get; set; }
-
+        public int HotelID { get; set; }
+        
+        public int? GuestNumber { get; set; }
     }
 }

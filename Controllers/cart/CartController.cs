@@ -12,11 +12,11 @@ namespace PrjFunNowWebApi.Controllers.cart
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class Cart : ControllerBase
+    public class CartController : ControllerBase
     {
         private readonly FunNowContext _context;
 
-        public Cart(FunNowContext context)
+        public CartController(FunNowContext context)
         {
             _context = context;
         }
@@ -35,7 +35,7 @@ namespace PrjFunNowWebApi.Controllers.cart
                     .CountAsync();
 
                 var orderDetails = await _context.OrderDetails
-                    .Where(od => od.MemberId == userId)
+                    .Where(od => od.MemberId == userId && od.IsOrdered == false)
                     .Include(od => od.Room)
                         .ThenInclude(r => r.Hotel)
                             .ThenInclude(h => h.City)
@@ -64,6 +64,8 @@ namespace PrjFunNowWebApi.Controllers.cart
                     MaximumOccupancy = od.Room?.MaximumOccupancy ?? 0,
                     AllOrderDetailsCount = allOrderDetailsCount,
                     RoomImage = od.Room?.RoomImages?.FirstOrDefault()?.RoomImage1,
+                    HotelID = od.Room?.Hotel?.HotelId ?? 0,
+                    GuestNumber = od.GuestNumber
                 }).ToList();
 
                 return Ok(new { success=true, orderDetailDtos});
@@ -77,8 +79,6 @@ namespace PrjFunNowWebApi.Controllers.cart
         }
 
      
-
-
         [HttpPost]
         public async Task<ActionResult<OrderDetail>> PostOrderDetail(OrderDetail orderDetail)
         {
@@ -86,6 +86,7 @@ namespace PrjFunNowWebApi.Controllers.cart
             {
                 orderDetail.CreatedAt = DateTime.Now;
                 orderDetail.IsOrdered = false;
+
                 _context.OrderDetails.Add(orderDetail);
                 await _context.SaveChangesAsync();
 
@@ -114,7 +115,9 @@ namespace PrjFunNowWebApi.Controllers.cart
             }
         }
 
-        // DELETE: api/Cart/{orderDetailID}
+
+
+        // DELETE: api/CartController/{orderDetailID}
         [HttpDelete("{orderDetailID}")]
         public async Task<ActionResult> DeleteOrderDetail(int orderDetailID)
         {
