@@ -39,6 +39,19 @@ namespace PrjFunNowWebApi.Controllers
             return await _context.Members.Where(m => m.FirstName.Contains(keyword) || m.Phone.Contains(keyword) || m.Email.Contains(keyword)).ToListAsync();
         }
 
+        //【Get】根據MemberID查詢會員資料
+        [HttpGet]
+        [Route("searchByID")]
+        public async Task<ActionResult<Member>> GetMemberByID(int ID)
+        {
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.MemberId == ID);
+            if (member == null)
+            {
+                return NotFound();
+            }
+            return member;
+        }
+
         //查有無相符Email
         [HttpPost("query")]
         public async Task<IActionResult> QueryEmail([FromBody] EmailQueryDTO model)
@@ -62,6 +75,61 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return NotFound(new { message = "NO" });
             }
+        }
+
+
+        //根據Email傳回memberID
+        [HttpPost("returnID")]
+        public async Task<IActionResult> QueryEmailReturnID([FromBody] EmailQueryDTO model)
+        {
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == model.Email);
+            if (member != null)
+            {
+                return Ok(new { memberId = member.MemberId });
+
+            }
+            else
+            {
+                return NotFound(new { message = "NO" });
+            }
+        }
+
+
+        //修改姓名
+        [HttpPut("{id}")]
+        public async Task<IActionResult> EditPassword(int id, EditNameDTO editName)
+        {
+            var member = await _context.Members.FindAsync(id);
+            if (member == null)
+            {
+                return BadRequest("一開始資料庫就沒有這個會員");
+            }
+
+            member.FirstName = editName.FirstName;
+            member.LastName = editName.LastName;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!MemberExists(id))
+                {
+                    return BadRequest("你在把更新資料存進資料庫時找不到這個會員了");
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok("姓名修改成功");
+        }
+
+        private bool MemberExists(int id)
+        {
+            return _context.Members.Any(e => e.MemberId == id);
         }
 
 
@@ -143,7 +211,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
         
-        
+        //驗證信內容
         private void SendVerificationEmail(Member members)
         {
             string verificationUrl = $"{_configuration["AppSettings:BaseUrl"]}/api/Members/VerifyEmail?token={members.VerificationToken}";
@@ -358,56 +426,11 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        //【Put】修改會員資料
-        [HttpPut("{id}")]
-        public async Task<IActionResult> EditMember(int id, EditMemberDTO editMember)
-        {
-    
-            var member = await _context.Members.FindAsync(id); //使用FindAsync方法從資料庫中找有沒有符合輸入id的MemberID
-            if (member == null) //如果沒有符合的會員
-            {
-                return BadRequest("一開始資料庫就沒有這個會員");
-            }
 
-            //如果有找到符合id的會員
-            // 把接受到的editMember資料更新到Member屬性中
-            member.FirstName = editMember.FirstName;
-            member.LastName = editMember.LastName;
-            member.Password = editMember.Password;
-            member.Phone = editMember.Phone;
-            member.Birthday = editMember.Birthday;
-            member.Image = editMember.Image;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
+   
 
-            //如果在資料庫儲存過程中發生衝突（ex.在你尋找會員和儲存更新資料的同時，會員可能被其他人刪掉了），
-            //這時候就會引發DbUpdateConcurrencyException異常。    
-            catch (DbUpdateConcurrencyException)
-            {
-             
-                
-                if (!MemberExists(id)) //所以這邊才又再檢查一次，是不是真的有這個會員id
-                {
-                    return BadRequest("你在把更新資料存進資料庫時找不到這個會員了");
-                }
-                else
-                {
-                    throw; //如果會員存在，則重新拋出異常，此時，異常可能是其他原因造成的
-                }
-            }
 
-            return Content("更新成功~~");
-        }
-
-        private bool MemberExists(int id)
-        {
-            return _context.Members.Any(e => e.MemberId == id);
-        }
-    
-        
         // 【Delete】刪除會員
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMember(int id)

@@ -23,4 +23,12 @@
         public decimal FreeWifiScore { get; set; }
         public string TravelerType { get; set; }
     }
+
+
+    public class HotelImageDto
+    {
+        public int HotelId { get; set; }
+        public string HotelImageName { get; set; }
+        public string HotelImageUrl { get; set; }
+    }
 }

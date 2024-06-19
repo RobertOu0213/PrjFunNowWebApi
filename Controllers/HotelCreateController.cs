@@ -31,10 +31,10 @@ namespace PrjFunNowWebApi.Controllers
 
         // POST: api/HotelCreate
         [HttpPost]
-        public async Task<ActionResult> PostHotel([FromForm] string hotelData, [FromForm] string roomData)
+        public async Task<ActionResult> PostHotel([FromForm] string hotelData, [FromForm] string roomData, [FromForm] int MemberId)
         {
 
-            //using var transaction = await _context.Database.BeginTransactionAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
                 var hotel = JsonSerializer.Deserialize<HotelDTO>(hotelData);
@@ -51,10 +51,10 @@ namespace PrjFunNowWebApi.Controllers
                         CityId = Convert.ToInt32(hotel.CityId),
                         HotelTypeId = Convert.ToInt32(hotel.TypeID),
                         LevelStar = Convert.ToInt32(hotel.LevelStar),
-                        Latitude = null,
-                        Longitude = null,
+                        Latitude = hotel.Latitude,
+                        Longitude = hotel.Longitude,
                         IsActive = false,
-                        MemberId = 1
+                        MemberId = MemberId
                     };
                     _context.Hotels.Add(newHotel);
                     await _context.SaveChangesAsync();
@@ -87,6 +87,10 @@ namespace PrjFunNowWebApi.Controllers
 
                         // 讀取設定
                         var imageSavePath = _configuration.GetValue<string>("ImageSavePath");
+                        if (imageSavePath == null)
+                        {
+                            return BadRequest(new { success = false, message = "Image save path is not configured." });
+                        }
 
                         // 建立檔案的完整路徑
                         var filePath = Path.Combine(imageSavePath, "image", fileName);
@@ -116,12 +120,15 @@ namespace PrjFunNowWebApi.Controllers
                     }
                     await _context.SaveChangesAsync();
 
-
-
-
+                    if (rooms == null)
+                    {
+                        // 處理 null 值，例如返回一個錯誤或設定一個預設值
+                        return BadRequest(new { success = false, message = "rooms are null" });
+                    }
 
                     foreach (var room in rooms)
                     {
+                  
                         Room newRoom = new Room
                         {
                             HotelId = newHotel.HotelId,
@@ -131,7 +138,7 @@ namespace PrjFunNowWebApi.Controllers
                             RoomPrice = Convert.ToDecimal(room.RoomPrice),
                             RoomTypeId = Convert.ToInt32(room.RoomTypeID),
                             Description = room.Description,
-                            MemberId = 1,
+                            MemberId = MemberId,
                             RoomStatus = true
 
                         };
@@ -158,8 +165,15 @@ namespace PrjFunNowWebApi.Controllers
                             var imageBytes = Convert.FromBase64String(data);
                             var fileName = Guid.NewGuid().ToString() + "." + format;
                             var imageSavePath = _configuration.GetValue<string>("ImageSavePath");
+                            if (imageSavePath == null)
+                            {
+                                return BadRequest(new { success = false, message = "Image save path is not configured." });
+                            }
+
+
                             var filePath = Path.Combine(imageSavePath, "image", fileName);
                             await System.IO.File.WriteAllBytesAsync(filePath, imageBytes);
+                    
 
                             // 將檔案名稱儲存到資料庫
                             var roomImage = new RoomImage
@@ -182,13 +196,10 @@ namespace PrjFunNowWebApi.Controllers
                         }
                         await _context.SaveChangesAsync();
 
-
-
-
                     }
 
                     await _context.SaveChangesAsync();
-                    //await transaction.CommitAsync();
+                    await transaction.CommitAsync();
 
                     return Ok(new { success = true });
                 }
@@ -197,8 +208,8 @@ namespace PrjFunNowWebApi.Controllers
             }
             catch (Exception ex)
             {
-                //await transaction.RollbackAsync();
-                _logger.LogError(ex, "Error occurred while creating hotel.");
+                await transaction.RollbackAsync();
+
                 return StatusCode(500, new { success = false, message = "Internal server error." });
             }
         }

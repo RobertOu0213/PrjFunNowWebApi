@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.DTO;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -20,97 +19,49 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
-        // GET: api/Orders
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrders()
+        // GET: api/Orders/ByMemberAndStatus/{memberId}/{orderStatusId}
+        [HttpGet("ByMemberAndStatus/{memberId}/{orderStatusId}")]
+        public async Task<ActionResult<IEnumerable<OrderDTO>>> GetOrdersByMemberAndStatus(int memberId, int orderStatusId)
         {
-            return await _context.Orders.ToListAsync();
-        }
-
-        // GET: api/Orders/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Order>> GetOrder(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
-
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            return order;
-        }
-
-        // GET: api/Orders/ByMember/5
-        [HttpGet("ByMember/{memberId}")]
-        public async Task<ActionResult<IEnumerable<Order>>> GetOrdersByMember(int memberId)
-        {
-            var orders = await _context.Orders.Where(o => o.MemberId == memberId).ToListAsync();
+            var orders = await _context.Orders
+                                       .Where(o => o.MemberId == memberId && o.OrderStatusId == orderStatusId)
+                                       .ToListAsync();
 
             if (orders == null || !orders.Any())
             {
                 return NotFound();
             }
 
-            return orders;
-        }
+            var orderIds = orders.Select(o => o.OrderId).ToList();
+            var orderDetails = await _context.OrderDetails
+                                             .Where(od => orderIds.Contains(od.OrderId ?? 0))
+                                             .Include(od => od.Room)
+                                             .ThenInclude(r => r.Hotel)
+                                             .ThenInclude(h => h.HotelImages) // 包含 HotelImages
+                                             .ToListAsync();
 
-        // PUT: api/Orders/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutOrder(int id, Order order)
-        {
-            if (id != order.OrderId)
+            var result = orders.Select(o => new OrderDTO
             {
-                return BadRequest();
-            }
-
-            _context.Entry(order).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!OrderExists(id))
+                OrderId = o.OrderId,
+                OrderStatusId = o.OrderStatusId,
+                TotalPrice = o.TotalPrice,
+                CreatedAt = o.CreatedAt,
+                GuestLastName = o.GuestLastName,
+                GuestFirstName = o.GuestFirstName,
+                GuestEmail = o.GuestEmail,
+                OrderDetails = orderDetails.Where(od => od.OrderId == o.OrderId).Select(od => new OrderDetailDTO
                 {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+                    OrderDetailId = od.OrderDetailId,
+                    RoomID = od.RoomId,
+                    CheckInDate = od.CheckInDate,
+                    CheckOutDate = od.CheckOutDate,
+                    HotelID = od.Room.Hotel.HotelId,
+                    HotelName = od.Room.Hotel.HotelName,
+                    HotelImages = od.Room.Hotel.HotelImages.Select(hi => hi.HotelImage1).ToList() // 映射圖片
+                }).ToList()
+            });
 
-            return NoContent();
-        }
-
-        // POST: api/Orders
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Order>> PostOrder(Order order)
-        {
-            _context.Orders.Add(order);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetOrder", new { id = order.OrderId }, order);
-        }
-
-        // DELETE: api/Orders/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteOrder(int id)
-        {
-            var order = await _context.Orders.FindAsync(id);
-            if (order == null)
-            {
-                return NotFound();
-            }
-
-            _context.Orders.Remove(order);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            return Ok(result);
         }
 
         private bool OrderExists(int id)

@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Cors;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
+using PrjFunNowWebApi.Models.DTO;
 using PrjFunNowWebApi.Models.joannaDTO;
 using System.ComponentModel.Design;
 using System.Globalization;
@@ -13,6 +15,7 @@ namespace PrjFunNowWebApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+   
     public class CommentController : ControllerBase
     {
         private readonly FunNowContext _context;
@@ -25,17 +28,57 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpGet("{hotelId}/ForHotelComment")]
+        public IActionResult GetHotelComment(int hotelId) {
+            
+            // 获取特定酒店的最新12条评论
+            var latestComments = _context.Comments
+                
+                .Where(c => c.HotelId == hotelId)
+                .Include(c => c.Member)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(6)
+                .Select(c => new {
+                    c.CommentText,
+                    c.CreatedAt,
+                    c.Member.FirstName
+
+                })
+                .ToList();
+
+            // 获取评论总数
+            var totalComments = _context.Comments.Count(c => c.HotelId == hotelId);
+            var result = new 
+            {
+                TotalComments = totalComments,
+                TopComments = latestComments
+            };
+
+            return Ok(result);
+        }
+
         //從資料庫取評論
         [HttpGet("{hotelId}/GetComments")]
         public IActionResult GetComments(int hotelId, int page = 1, int pageSize = 10, string search = null, int? ratingFilter = null, string dateFilter = null, string sortBy = null, string topics = null)
         {
             try
             {
-                // 基本查询并包含 RatingScores 表
-                IQueryable<Comment> commentsQuery = _context.Comments
-                                                             .Where(c => c.HotelId == hotelId)
-                                                             .Include(c => c.RatingScores);
+                IQueryable<Comment> commentsQuery = from c in _context.Comments
+                                                    where c.HotelId == hotelId
+                                                    join r in _context.RatingScores on c.CommentId equals r.CommentId into ratingGroup
+                                                    join m in _context.Members on c.MemberId equals m.MemberId
+                                                    from rg in ratingGroup.DefaultIfEmpty()
+                                                    select new Comment
+                                                    {
+                                                        CommentId = c.CommentId,
+                                                        HotelId = c.HotelId,
+                                                        CommentTitle = c.CommentTitle,
+                                                        CommentText = c.CommentText,
+                                                        CreatedAt = c.CreatedAt,
+                                                        RatingScores = ratingGroup.ToList(),
+                                                    };
 
+                //commentsQuery = commentsQuery.AsNoTracking(); // 禁用跟踪
                 if (!string.IsNullOrEmpty(search))
                 {
                     commentsQuery = commentsQuery.Where(c => c.CommentTitle.Contains(search) || c.CommentText.Contains(search));
@@ -316,15 +359,17 @@ namespace PrjFunNowWebApi.Controllers
             }
 
             var ratingText = GetRatingText(averageScore);
+            var counts = await _context.Comments
+                .Where( c => c.HotelId == hotelId).CountAsync();
 
-            return Ok(new { HotelId = hotelId, AverageScore = averageScore, RatingText = ratingText });
+            return Ok(new { HotelId = hotelId, AverageScore = averageScore, RatingText = ratingText ,Counts = counts });
         }
 
         private string GetRatingText(decimal averageScore)
         {
             if (averageScore >= 9)
             {
-                return "超讚";
+                return "超讚！";
             }
             else if (averageScore >= 7)
             {
@@ -427,7 +472,8 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        [HttpPost("filter")]
+
+        [HttpPost("ReportedComment")]
         public async Task<IActionResult> GetReportReviews()
         {
             var query = _context.ReportReviews
@@ -442,6 +488,9 @@ namespace PrjFunNowWebApi.Controllers
                 r.ReportId,
                 r.CommentId,
                 r.MemberId,
+                r.Member.FirstName,
+                r.Member.Email,
+                r.Member.Phone,
                 r.ReportTitleId,
                 r.ReportSubtitleId,
                 r.ReportedAt,
@@ -449,6 +498,8 @@ namespace PrjFunNowWebApi.Controllers
                 r.ReviewStatus,
                 r.ReviewedBy,
                 r.ReviewedAt,
+                r.Comment.CommentTitle,
+                r.Comment.CommentText,
           
             }).ToListAsync();
 
@@ -561,6 +612,7 @@ namespace PrjFunNowWebApi.Controllers
 
         //根據會員選取未評論、尚未完成、已評論
         [HttpGet("GetCommentsByStatus/{memberId}")]
+
         public async Task<IActionResult> GetCommentsByStatus(int memberId)
         {
                var comments = await _context.Comments
@@ -631,7 +683,7 @@ namespace PrjFunNowWebApi.Controllers
            }
 
 
-        //填寫評論表單、新增到DB
+        //填寫評論表單、新增DB
         [HttpPost("AddComment")]
         public async Task<IActionResult> AddComment([FromBody] CommentRequest newCommentRequest)
         {
@@ -703,11 +755,9 @@ namespace PrjFunNowWebApi.Controllers
             public int LocationScore { get; set; }
             public int FreeWifiScore { get; set; }
             public string TravelerType { get; set; }
-            
-            
+
+
         }
-
-
     }
 }
 
