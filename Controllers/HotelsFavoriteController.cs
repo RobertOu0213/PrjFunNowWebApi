@@ -32,33 +32,18 @@ namespace PrjFunNowWebApi.Controllers
                          .ToListAsync();
 
             IQueryable<Hotel> query = _context.Hotels
-                                               .Where(h => memberLikes.Contains(h.HotelId))
-                                              .Include(h => h.HotelImages);  // 確保加載相關的圖片數據
-
-               // 首先，执行基本查询并将结果加载到内存中
-            var hotelData = await query
-                .GroupBy(h => new { h.City.CityName, h.City.Country.CountryName })
-                .Select(g => new {
-                    City = g.Key.CityName,
-                    Country = g.Key.CountryName,
-                    Hotels = g.ToList()  // 将组内的酒店列表一起取出
-                })
-                .ToListAsync();
-            // 然后，在内存中处理 null 值和提取图片 URL
-            var groupedResult = hotelData.Select(g => new {
-                City = g.City,
-                Country = g.Country,
-                HotelCount = g.Hotels.Count,
-                ImageUrl = string.IsNullOrEmpty(g.Hotels
-                    .SelectMany(h => h.HotelImages)
-                    .Select(img => img.HotelImage1)
-                    .FirstOrDefault())? "https://stickershop.line-scdn.net/stickershop/v1/sticker/548880784/IOS/sticker.png"
-                                               : g.Hotels
-                    .SelectMany(h => h.HotelImages)
-                    .Select(img => img.HotelImage1)
-                    .FirstOrDefault()
-                      }).ToList();
-                 return Ok(groupedResult);
+                       .Where(h => memberLikes.Contains(h.HotelId))
+                       .Include(h => h.HotelImages);  // 確保加載相關的圖片數據
+            var groupedResult = await query
+                  .GroupBy(h => new { h.City.CityName, h.City.Country.CountryName })
+                  .Select(g => new {
+                      City = g.Key.CityName,
+                      Country = g.Key.CountryName,
+                      HotelCount = g.Count(),
+                      HotelImage = g.FirstOrDefault().HotelImages.FirstOrDefault().HotelImage1 // 假設每個酒店至少有一張圖片// 使用空條件運算符和預設圖片
+                  })
+                                 .ToListAsync();
+            return Ok(groupedResult);
         }
 
         [HttpGet("{memberId}/FavoriteHotels/{cityName}")]
