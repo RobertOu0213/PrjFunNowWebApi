@@ -22,82 +22,7 @@ namespace PrjFunNowWebApi.Controllers
             _logger = logger;  // 修改這一行
         }
 
-        // GET: api/Websocket
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Member>>> GetMembers()
-        {
-            return await _context.Members.ToListAsync();
-        }
 
-        // GET: api/Websocket/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Member>> GetMember(int id)
-        {
-            var member = await _context.Members.FindAsync(id);
-
-            if (member == null)
-            {
-                return NotFound();
-            }
-
-            return member;
-        }
-
-        // PUT: api/Websocket/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutMember(int id, Member member)
-        {
-            if (id != member.MemberId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(member).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!MemberExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Websocket
-        [HttpPost]
-        public async Task<ActionResult<Member>> PostMember(Member member)
-        {
-            _context.Members.Add(member);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMember", new { id = member.MemberId }, member);
-        }
-
-        // DELETE: api/Websocket/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMember(int id)
-        {
-            var member = await _context.Members.FindAsync(id);
-            if (member == null)
-            {
-                return NotFound();
-            }
-
-            _context.Members.Remove(member);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
 
         [HttpPost("sendMessage")]
         public async Task<IActionResult> SendMessage(int senderId, int receiverId, [FromBody] string message)
@@ -119,8 +44,10 @@ namespace PrjFunNowWebApi.Controllers
 
             try
             {
+                var sendTime = DateTime.UtcNow; // 記錄傳送時間
+
                 // 儲存訊息到 Dialog 表
-                await SaveMessageAsync(senderId, receiverId, message);
+                await SaveMessageAsync(senderId, receiverId, message, sendTime);
 
                 // 使用 SignalR 發送訊息給接收者
                 await _hubContext.Clients.User(receiverId.ToString()).SendAsync("ReceiveMessage", senderId.ToString(), message);
@@ -135,14 +62,14 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
-        private async Task SaveMessageAsync(int senderId, int receiverId, string message)
+        private async Task SaveMessageAsync(int senderId, int receiverId, string message, DateTime sendTime)
         {
             var dialog = new Dialog
             {
                 MemberId = senderId,
                 CalltoMemberId = receiverId,  // 設置接收者的 ID
                 Detail = message,
-                CreateAt = DateTime.UtcNow
+                CreateAt = DateTime.Now // 使用傳送時間
             };
 
             _context.Dialogs.Add(dialog);
