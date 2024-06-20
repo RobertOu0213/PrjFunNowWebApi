@@ -15,5 +15,7 @@ public partial class Coupon
 
     public decimal Discount { get; set; }
 
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+
     public virtual ICollection<PaymentStatus> PaymentStatuses { get; set; } = new List<PaymentStatus>();
 }

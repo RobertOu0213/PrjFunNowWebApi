@@ -14,4 +14,6 @@ public partial class PaymentStatus
     public int? CouponId { get; set; }
 
     public virtual Coupon Coupon { get; set; }
+
+    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
 }
