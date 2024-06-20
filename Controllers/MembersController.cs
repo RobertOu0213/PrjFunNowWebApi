@@ -94,6 +94,26 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
+        //根據memberID傳回roleID
+        [HttpPost("returnRoleID")]
+        public async Task<IActionResult> QueryMemberIDReturnRoleID([FromBody] MemberIDQueryDTO model)
+        {
+            if (model == null || string.IsNullOrEmpty(model.MemberId.ToString()))
+            {
+                return BadRequest("Invalid request data");
+            }
+
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.MemberId == model.MemberId);
+            if (member != null)
+            {
+                return Ok(new { roleID = member.RoleId });
+            }
+            else
+            {
+                return NotFound(new { message = "NO" });
+            }
+        }
+
 
         //修改姓名
         [HttpPut("{id}")]

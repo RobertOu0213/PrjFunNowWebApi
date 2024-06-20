@@ -99,7 +99,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-        [HttpPut("{memberId}/{hotelId}")]
+        [HttpPut("{memberId}/{hotelId}")]   //不要用這個
         public async Task<IActionResult> UpdateLikeStatus(int memberId, int hotelId, [FromBody] bool likeStatus)
         {
             Console.WriteLine($"Received request to update like status for memberId: {memberId}, hotelId: {hotelId}, likeStatus: {likeStatus}");
@@ -127,7 +127,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
 
-        [HttpGet("like/{memberId}/{hotelId}")]
+        [HttpGet("like/{memberId}/{hotelId}")]   //不用POST原因是因為沒有機密數據,所以用GET
         public async Task<IActionResult> UpdateLike(int memberId, int hotelId)
         {
          //   Console.WriteLine($"Received request to update like status for memberId: {memberId}, hotelId: {hotelId}, likeStatus: {likeStatus}");
@@ -156,6 +156,20 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
+        [HttpGet("hotelLikes/{memberId}")]
+        public async Task<IActionResult> GetHotelLikes(int memberId)
+        {
+            var hotelLikes = await _context.HotelLikes
+                .Where(hl => hl.MemberId == memberId)
+                .Select(hl => new
+                {
+                    HotelId = hl.HotelId,
+                    LikeStatus = hl.LikeStatus
+                })
+                .ToListAsync();
+
+            return Ok(hotelLikes);
+        }
 
     }
 
