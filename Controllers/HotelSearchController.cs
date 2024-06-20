@@ -71,6 +71,7 @@ namespace PrjFunNowWebApi.Controllers
                 // 查找所有飯店，並包含其房間、城市、國家、設備和圖片等相關信息。
                 var hotels = await _context.Hotels
                     // 包含飯店的房間信息
+                    .Where(h => h.IsActive == true)
                     .Include(h => h.Rooms)
                     .ThenInclude(r => r.RoomEquipmentReferences)
                     .ThenInclude(re => re.RoomEquipment)
@@ -78,6 +79,8 @@ namespace PrjFunNowWebApi.Controllers
                     .Include(h => h.HotelEquipmentReferences).ThenInclude(r => r.HotelEquipment)
                     .Include(h => h.HotelImages)
                     .ToListAsync();
+
+
 
                 // 過濾掉已被訂走的房間，並確保每個飯店有足夠的房間數和容納人數，生成包含飯店和房間的查詢結果。
                 var hotelsQuery = hotels
