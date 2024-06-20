@@ -258,6 +258,18 @@ namespace PrjFunNowWebApi.Controllers
 
             return Ok();
         }
+
+        [HttpGet]
+        [Route("likedHotels/{memberId}")]
+        public async Task<ActionResult<IEnumerable<int>>> GetLikedHotels(int memberId)
+        {
+            var likedHotelIds = await _context.HotelLikes
+                .Where(like => like.MemberId == memberId && like.LikeStatus)
+                .Select(like => like.HotelId)
+                .ToListAsync();
+
+            return Ok(likedHotelIds);
+        }
     }
 
 }
