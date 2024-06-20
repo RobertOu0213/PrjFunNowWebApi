@@ -368,6 +368,7 @@ public partial class FunNowContext : DbContext
 
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
             entity.Property(e => e.Birthday).HasColumnType("date");
+            entity.Property(e => e.CityId).HasColumnName("CityID");
             entity.Property(e => e.Email).IsRequired();
             entity.Property(e => e.FirstName).IsRequired();
             entity.Property(e => e.Otpcode).HasColumnName("OTPCode");
@@ -394,15 +395,26 @@ public partial class FunNowContext : DbContext
             entity.ToTable("Order");
 
             entity.Property(e => e.OrderId).HasColumnName("OrderID");
+            entity.Property(e => e.CouponId).HasColumnName("CouponID");
             entity.Property(e => e.CreatedAt).HasColumnType("datetime");
             entity.Property(e => e.MemberId).HasColumnName("MemberID");
             entity.Property(e => e.OrderStatusId).HasColumnName("OrderStatusID");
+            entity.Property(e => e.PaymentStatusId).HasColumnName("PaymentStatusID");
             entity.Property(e => e.TotalPrice).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Coupon).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.CouponId)
+                .HasConstraintName("FK_Order_Coupon");
 
             entity.HasOne(d => d.OrderStatus).WithMany(p => p.Orders)
                 .HasForeignKey(d => d.OrderStatusId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Order_OrderStatus");
+
+            entity.HasOne(d => d.PaymentStatus).WithMany(p => p.Orders)
+                .HasForeignKey(d => d.PaymentStatusId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Order_PaymentStatus");
         });
 
         modelBuilder.Entity<OrderDetail>(entity =>
