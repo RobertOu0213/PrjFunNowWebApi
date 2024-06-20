@@ -10,5 +10,10 @@
         public string HotelName { get; set; }
         public string HotelAddress { get; set; }
         public string HotelImage { get; set; }
+        public string MemberImage { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string MemberHotelName { get; set; }
+        public string MemberHotelAddress { get; set; }
     }
 }
