@@ -81,6 +81,10 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return NotFound();
             }
 
+            // 提供默认经纬度值
+            hotel.Latitude = string.IsNullOrEmpty(hotel.Latitude) ? "0.0" : hotel.Latitude;
+            hotel.Longitude = string.IsNullOrEmpty(hotel.Longitude) ? "0.0" : hotel.Longitude;
+
             var orders = await _context.OrderDetails
                 .Where(k => !(k.CheckInDate >= parsedCheckOutDate || k.CheckOutDate <= parsedCheckInDate))
                 .Select(k => k.RoomId)
