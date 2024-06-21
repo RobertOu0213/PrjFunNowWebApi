@@ -81,7 +81,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                 return NotFound();
             }
 
-            // 提供默认经纬度值
+            // 提供默认经纬度值0.0
             hotel.Latitude = string.IsNullOrEmpty(hotel.Latitude) ? "0.0" : hotel.Latitude;
             hotel.Longitude = string.IsNullOrEmpty(hotel.Longitude) ? "0.0" : hotel.Longitude;
 
