@@ -8,7 +8,13 @@
         public DateTime CheckOutDate { get; set; }
         public int HotelID { get; set; }
         public string HotelName { get; set; }
-        public List<string> HotelImages { get; set; }  // 更新這行
+        public string HotelAddress { get; set; }     // 新增
+        public string HotelPhone { get; set; }       // 新增
+        public string HotelTypeName { get; set; }    // 新增
+        public List<string> HotelImages { get; set; }
+        public string RoomTypeName { get; set; }     // 新增
+        public List<string> RoomImages { get; set; } // 新增
+        public List<string> RoomEquipmentNames { get; set; } // 新增
 
     }
 }
