@@ -5,6 +5,7 @@ using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 using System.Net.Mail;
 using static System.Net.WebRequestMethods;
+using BCrypt.Net;
 
 
 

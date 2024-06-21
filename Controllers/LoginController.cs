@@ -12,6 +12,7 @@ using PrjFunNowWebApi.Models.DTO;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using BCrypt.Net;
 
 
 namespace PrjFunNowWebApi.Controllers

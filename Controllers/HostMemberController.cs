@@ -78,7 +78,7 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        ////修改會員所有資料
+        ////修改會員所有資料，因為要加圖片上傳，所以移到MVC web專案裏去了
         //[HttpPut("{id}")]
         //public async Task<IActionResult> HostMemberEdit(int id, HostMemberEditDTO edit)
         //{

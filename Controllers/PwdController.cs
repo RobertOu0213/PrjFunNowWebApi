@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
+using BCrypt.Net;
 
 namespace PrjFunNowWebApi.Controllers
 {
