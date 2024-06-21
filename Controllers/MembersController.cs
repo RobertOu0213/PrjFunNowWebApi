@@ -10,6 +10,8 @@ using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 using BCrypt.Net;
 using Org.BouncyCastle.Crypto.Generators;
+using System.Globalization;
+using TinyPinyin;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -51,7 +53,27 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return NotFound();
             }
+
+            // 假設FirstName為中文時，需要轉換成羅馬拼音
+            if (IsChinese(member.FirstName))
+            {
+                member.FirstName = PinyinHelper.GetPinyin(member.FirstName);
+            }
+
             return member;
+        }
+
+        // 判斷字符串是否包含中文字符
+        private bool IsChinese(string input)
+        {
+            foreach (char c in input)
+            {
+                if (char.GetUnicodeCategory(c) == UnicodeCategory.OtherLetter)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         //查有無相符Email
