@@ -33,6 +33,12 @@ public partial class Member
 
     public string Otpcode { get; set; }
 
+    public int? CityId { get; set; }
+
+    public string MemberAddress { get; set; }
+
+    public string Introduction { get; set; }
+
     public DateTime? Otpexpiry { get; set; }
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
