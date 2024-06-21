@@ -11,7 +11,7 @@
         public string? sortBy { get; set; }
         public string? sortType { get; set; } = "asc";
         public int? lowerPrice { get; set; } = 1;
-        public int? upperPrice { get; set; } = 50000;
+        public int? upperPrice { get; set; } = 1000000;
 
         // 新增篩選條件
         public List<int> HotelTypes { get; set; } = new List<int>();
