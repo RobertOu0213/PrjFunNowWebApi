@@ -1,5 +1,5 @@
 ﻿using PrjFunNowWebApi.Models.DTO;
-
+//--
 namespace PrjFunNowWebApi.Models.louie_dto
 {
     public class pgHotel_HotelDetailDTO
