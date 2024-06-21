@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
+using BCrypt.Net;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -94,6 +96,26 @@ namespace PrjFunNowWebApi.Controllers
             }
         }
 
+        //根據memberID傳回roleID
+        [HttpPost("returnRoleID")]
+        public async Task<IActionResult> QueryMemberIDReturnRoleID([FromBody] MemberIDQueryDTO model)
+        {
+            if (model == null || string.IsNullOrEmpty(model.MemberId.ToString()))
+            {
+                return BadRequest("Invalid request data");
+            }
+
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.MemberId == model.MemberId);
+            if (member != null)
+            {
+                return Ok(new { roleID = member.RoleId });
+            }
+            else
+            {
+                return NotFound(new { message = "NO" });
+            }
+        }
+
 
         //修改姓名
         [HttpPut("{id}")]
@@ -138,11 +160,15 @@ namespace PrjFunNowWebApi.Controllers
         public async Task<ActionResult<RegisterMemberDTO>> CreateMember(RegisterMemberDTO registerMember)
         {
 
+            // 雜湊密碼（BCrypt 會自動生成並加入鹽值）
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerMember.Password);
+
+
             // 儲存會員資訊
             Member members = new Member();
             members.FirstName = registerMember.FirstName;
             members.Email = registerMember.Email;
-            members.Password = registerMember.Password;
+            members.Password = hashedPassword; // 儲存雜湊後的密碼
             members.LastName = registerMember.LastName;
             members.VerificationToken = Guid.NewGuid().ToString();
             members.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(10);

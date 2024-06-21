@@ -65,7 +65,7 @@ namespace PrjFunNowWebApi.Controllers.cart
                     AllOrderDetailsCount = allOrderDetailsCount,
                     RoomImage = od.Room?.RoomImages?.FirstOrDefault()?.RoomImage1,
                     HotelID = od.Room?.Hotel?.HotelId ?? 0,
-                    GuestNumber = od.GuestNumber
+                    //GuestNumber = od.GuestNumber,
                 }).ToList();
 
                 return Ok(new { success=true, orderDetailDtos});

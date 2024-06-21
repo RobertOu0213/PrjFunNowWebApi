@@ -27,27 +27,34 @@ namespace PrjFunNowWebApi.Controllers
 
         // GET: api/HostManage
         [HttpGet]
-        public async Task<ActionResult> GetHotels(int? userId)
+        public async Task<ActionResult> GetHotels(int? userId, string query = "")
         {
-
             if (userId == null || userId <= 0)
             {
                 return BadRequest("Invalid userId.");
             }
+
             // 讀取設定
             var imageSavePath = _configuration.GetValue<string>("ImageSavePath");
 
-            var hotels = await (from h in _context.Hotels
-                                where h.MemberId == userId
-                                select new
-                                {
-                                    HotelId = h.HotelId,
-                                    HotelName = h.HotelName,
-                                    CityName = h.City.CityName,
-                                    CountryName = h.City.Country.CountryName,
-                                    HotelImage = h.HotelImages.Select(hi => hi.HotelImage1).FirstOrDefault(),
-                                    isActive = h.IsActive
-                                }).ToListAsync();
+            var hotelsQuery = from h in _context.Hotels
+                              where h.MemberId == userId
+                              select new
+                              {
+                                  HotelId = h.HotelId,
+                                  HotelName = h.HotelName,
+                                  CityName = h.City.CityName,
+                                  CountryName = h.City.Country.CountryName,
+                                  HotelImage = h.HotelImages.Select(hi => hi.HotelImage1).FirstOrDefault(),
+                                  IsActive = h.IsActive
+                              };
+
+            if (!string.IsNullOrEmpty(query))
+            {
+                hotelsQuery = hotelsQuery.Where(h => h.HotelName.Contains(query) || h.HotelId.ToString().Contains(query));
+            }
+
+            var hotels = await hotelsQuery.ToListAsync();
 
             var result = hotels.Select(h => new
             {
@@ -58,18 +65,11 @@ namespace PrjFunNowWebApi.Controllers
                 HotelImage = h.HotelImage != null && (h.HotelImage.StartsWith("http://") || h.HotelImage.StartsWith("https://"))
                              ? h.HotelImage
                              : $"image/{h.HotelImage}",
-                h.isActive
-
+                h.IsActive
             }).ToList();
 
             return Ok(result);
-           
-
-               
-
         }
-
-
 
     }
 }
