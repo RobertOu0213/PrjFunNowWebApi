@@ -21,7 +21,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
         [HttpGet]
-        [Route("suggestions")]
+        [Route("suggestions")]   //Autocomplete功能
         public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotelSuggestions([FromQuery] string keyword)
         {
             // 檢查關鍵字是否為空或 null
@@ -78,6 +78,7 @@ namespace PrjFunNowWebApi.Controllers
                     .Include(h => h.City).ThenInclude(c => c.Country)
                     .Include(h => h.HotelEquipmentReferences).ThenInclude(r => r.HotelEquipment)
                     .Include(h => h.HotelImages)
+                    .Include(h => h.HotelType) // 包含 HotelType 信息
                     .ToListAsync();
 
                 // 查找每個飯店的訂單數量
@@ -149,8 +150,9 @@ namespace PrjFunNowWebApi.Controllers
                 if (!string.IsNullOrEmpty(indexhotelSearchDTO.keyword))
                 {
                     hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) ||
-                    s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword) ||
-                    s.Hotel.City.CityName.Contains(indexhotelSearchDTO.keyword));
+                                                         s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword) ||
+                                                         s.Hotel.City.CityName.Contains(indexhotelSearchDTO.keyword) ||
+                                                         s.Hotel.HotelType.HotelTypeName.Contains(indexhotelSearchDTO.keyword)); // 新增HotelTypeName搜尋條件
                 }
 
                 if (indexhotelSearchDTO.lowerPrice.HasValue && indexhotelSearchDTO.upperPrice.HasValue)
