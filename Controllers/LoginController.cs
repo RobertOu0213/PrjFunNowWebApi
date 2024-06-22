@@ -33,45 +33,70 @@ namespace PrjFunNowWebApi.Controllers
            
         }
 
-
+        //結合加鹽加密
         [AllowAnonymous]
         [HttpPost]
-        public IActionResult Login([FromBody]LoginRequestt loginRequest)
+        public async Task<IActionResult> Login([FromBody] LoginRequestt loginRequest)
         {
-            //呼叫 Authenticate 方法進行帳號密碼驗證
-            bool isAuthenticated = Authenticate(loginRequest).Result;
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == loginRequest.Email);
+
+            if (member == null)
+            {
+                return Unauthorized("無效的電子郵件或密碼");
+            }
+
+            bool isAuthenticated = BCrypt.Net.BCrypt.Verify(loginRequest.Password, member.Password);
 
             if (isAuthenticated)
             {
-                //拿到jwt Token
-                var token = GenerateToken(loginRequest.Email);
-
-                //拿到Member ID
-                var memberID = GetMemberID(loginRequest);
-
-                return Ok(new { token, memberID });
+                var token = GenerateToken(member.Email);//拿到JWT token
+                return Ok(new { token, memberID = member.MemberId });//拿到member ID
             }
 
-            return BadRequest("登入失敗");
+            return Unauthorized("無效的電子郵件或密碼");
         }
 
-        //用來進行帳號密碼比對的方法
-        private async Task<bool> Authenticate(LoginRequestt loginRequest)
-        {
-            // 從 FunNowContext 中取得 Member 資料表，比對資料
-            var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == loginRequest.Email);
 
-            // 如果找到符合的會員資料
-            if (member != null)
-            {
-                // 比對密碼是否正確
-                if (member.Password == loginRequest.Password)
-                {
-                    return true; // 驗證成功
-                }
-            }
-            return false; // 驗證失敗
-        }
+        //[AllowAnonymous]
+        //[HttpPost]
+        //public IActionResult Login([FromBody]LoginRequestt loginRequest)
+        //{
+        //    //呼叫 Authenticate 方法進行帳號密碼驗證
+        //    bool isAuthenticated = Authenticate(loginRequest).Result;
+
+        //    if (isAuthenticated)
+        //    {
+        //        //拿到jwt Token
+        //        var token = GenerateToken(loginRequest.Email);
+
+        //        //拿到Member ID
+        //        var memberID = GetMemberID(loginRequest);
+
+        //        return Ok(new { token, memberID });
+        //    }
+
+        //    return BadRequest("登入失敗");
+        //}
+
+        ////用來進行帳號密碼比對的方法
+        //private async Task<bool> Authenticate(LoginRequestt loginRequest)
+        //{
+        //    // 從 FunNowContext 中取得 Member 資料表，比對資料
+        //    var member = await _context.Members.FirstOrDefaultAsync(m => m.Email == loginRequest.Email);
+
+        //    // 如果找到符合的會員資料
+        //    if (member != null)
+        //    {
+        //        // 比對密碼是否正確
+        //        if (member.Password == loginRequest.Password)
+        //        {
+        //            // 使用 BCrypt 驗證密碼
+        //            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(loginRequest.Password, member.Password);
+        //            return isPasswordValid; //驗證成功
+        //        }
+        //    }
+        //    return false; // 驗證失敗
+        //}
 
 
         //用來產生jwt Token的方法
