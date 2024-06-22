@@ -31,7 +31,11 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return BadRequest("一開始資料庫就沒有這個會員");
             }
-            member.Password = setNewPwd.Password;
+
+            // 使用 BCrypt 來雜湊新密碼
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(setNewPwd.Password);
+
+            member.Password = hashedPassword;
 
             try
             {

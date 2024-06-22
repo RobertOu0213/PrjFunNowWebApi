@@ -77,10 +77,15 @@ namespace PrjFunNowWebApi.Controllers
             var hotelsWithRatings = new List<object>();
             foreach (var hotel in hotels)
             {
+                // 第一個 API 請求：獲取平均評分
                 string ratingUrl = $"https://localhost:7103/api/Comment/{hotel.HotelId}/AverageScores";
-                var response = await httpClient.GetStringAsync(ratingUrl);
-                // 假设response直接返回一个评分值
-             
+                var response = await httpClient.GetStringAsync(ratingUrl);                       // 假设response直接返回一个评分值
+
+
+                // 第二個 API 請求：獲取評論總數
+                string commentCountUrl = $"https://localhost:7103/api/Comment/commentCounts";
+                var commentCountResponse = await httpClient.GetStringAsync(commentCountUrl);
+
                 hotelsWithRatings.Add(new
                 {
                     hotel.HotelId,
@@ -90,7 +95,8 @@ namespace PrjFunNowWebApi.Controllers
                     hotel.LevelStar,
                     hotel.MinimumPrice,
                     hotel.HotelImage,
-                    Rating = response  // 将评分添加到输出中
+                    Rating = response,  // 将评分添加到输出中
+                    TotalComments = commentCountResponse  // 新添加的評論總數
                 });
             }
 
