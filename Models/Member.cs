@@ -35,6 +35,12 @@ public partial class Member
 
     public DateTime? Otpexpiry { get; set; }
 
+    public int? CityId { get; set; }
+
+    public string MemberAddress { get; set; }
+
+    public string Introduction { get; set; }
+
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();
 
     public virtual ICollection<Dialog> Dialogs { get; set; } = new List<Dialog>();

@@ -8,6 +8,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
+using BCrypt.Net;
+using Org.BouncyCastle.Crypto.Generators;
+using System.Globalization;
+using TinyPinyin;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -49,7 +53,27 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return NotFound();
             }
+
+            // 假設FirstName為中文時，需要轉換成羅馬拼音
+            if (IsChinese(member.FirstName))
+            {
+                member.FirstName = PinyinHelper.GetPinyin(member.FirstName);
+            }
+
             return member;
+        }
+
+        // 判斷字符串是否包含中文字符
+        private bool IsChinese(string input)
+        {
+            foreach (char c in input)
+            {
+                if (char.GetUnicodeCategory(c) == UnicodeCategory.OtherLetter)
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         //查有無相符Email
@@ -87,6 +111,26 @@ namespace PrjFunNowWebApi.Controllers
             {
                 return Ok(new { memberId = member.MemberId });
 
+            }
+            else
+            {
+                return NotFound(new { message = "NO" });
+            }
+        }
+
+        //根據memberID傳回roleID
+        [HttpPost("returnRoleID")]
+        public async Task<IActionResult> QueryMemberIDReturnRoleID([FromBody] MemberIDQueryDTO model)
+        {
+            if (model == null || string.IsNullOrEmpty(model.MemberId.ToString()))
+            {
+                return BadRequest("Invalid request data");
+            }
+
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.MemberId == model.MemberId);
+            if (member != null)
+            {
+                return Ok(new { roleID = member.RoleId });
             }
             else
             {
@@ -138,11 +182,15 @@ namespace PrjFunNowWebApi.Controllers
         public async Task<ActionResult<RegisterMemberDTO>> CreateMember(RegisterMemberDTO registerMember)
         {
 
+            // 雜湊密碼（BCrypt 會自動生成並加入鹽值）
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(registerMember.Password);
+
+
             // 儲存會員資訊
             Member members = new Member();
             members.FirstName = registerMember.FirstName;
             members.Email = registerMember.Email;
-            members.Password = registerMember.Password;
+            members.Password = hashedPassword; // 儲存雜湊後的密碼
             members.LastName = registerMember.LastName;
             members.VerificationToken = Guid.NewGuid().ToString();
             members.VerificationTokenExpiry = DateTime.UtcNow.AddMinutes(10);

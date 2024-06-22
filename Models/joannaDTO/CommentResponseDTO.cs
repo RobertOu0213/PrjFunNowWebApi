@@ -11,8 +11,10 @@
             public DateTime CreatedAt { get; set; }
             public List<RatingScoreDTO> RatingScores { get; set; }
             public int MemberId { get; set; } // 新增 MemberId
-            public string MemberName { get; set; } // 新增 MemberName
-            public string MemberEmail { get; set; } // 新增 MemberEmail
+            public string FirstName { get; set; } // 添加新屬性
+            public string TravelerType { get; set; } // 添加新屬性
+            public string RoomTypeName { get; set; } // 添加新屬性
+
         }
 
         public class CommentStatisticsDTO

@@ -21,7 +21,7 @@ namespace PrjFunNowWebApi.Controllers
 
 
         [HttpGet]
-        [Route("suggestions")]
+        [Route("suggestions")]   //Autocomplete功能
         public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotelSuggestions([FromQuery] string keyword)
         {
             // 檢查關鍵字是否為空或 null
@@ -71,12 +71,24 @@ namespace PrjFunNowWebApi.Controllers
                 // 查找所有飯店，並包含其房間、城市、國家、設備和圖片等相關信息。
                 var hotels = await _context.Hotels
                     // 包含飯店的房間信息
+                    .Where(h => h.IsActive == true)
                     .Include(h => h.Rooms)
                     .ThenInclude(r => r.RoomEquipmentReferences)
                     .ThenInclude(re => re.RoomEquipment)
                     .Include(h => h.City).ThenInclude(c => c.Country)
                     .Include(h => h.HotelEquipmentReferences).ThenInclude(r => r.HotelEquipment)
                     .Include(h => h.HotelImages)
+                    .Include(h => h.HotelType) // 包含 HotelType 信息
+                    .ToListAsync();
+
+                // 查找每個飯店的訂單數量
+                var hotelOrderCounts = await _context.OrderDetails
+                    .GroupBy(o => o.Room.HotelId)
+                    .Select(g => new
+                    {
+                        HotelId = g.Key,
+                        OrderCount = g.Count()
+                    })
                     .ToListAsync();
 
                 // 過濾掉已被訂走的房間，並確保每個飯店有足夠的房間數和容納人數，生成包含飯店和房間的查詢結果。
@@ -91,7 +103,10 @@ namespace PrjFunNowWebApi.Controllers
                             .GroupBy(r => r.HotelId) // 按照飯店 ID 進行分組
                             .Where(g => g.Count() >= indexhotelSearchDTO.roomnum) // 確保每個飯店有足夠的房間數
                             .SelectMany(g => g.OrderByDescending(r => r.MaximumOccupancy).Take(indexhotelSearchDTO.roomnum)) // 選擇最多容納人數的房間
-                            .ToList() // 將結果轉換為列表
+                            .ToList(), // 將結果轉換為列表
+                        AvailableRooms = h.Rooms.Count(r => !orders.Contains(r.RoomId)),  // 計算空房間數
+                        HotelOrderCount = hotelOrderCounts.FirstOrDefault(oc => oc.HotelId == h.HotelId)?.OrderCount ?? 0 // 獲取訂單數量
+
                     })
                     // 確保每個飯店的房間數符合要求，並且總容納人數足夠
                     .Where(x => x.TopRooms.Count == indexhotelSearchDTO.roomnum && x.TopRooms.Sum(r => r.MaximumOccupancy) >= totalPeople)
@@ -99,7 +114,7 @@ namespace PrjFunNowWebApi.Controllers
                     {
                         x.Hotel,
                         x.TopRooms, //容納得下的房間
-                        // 建立包含飯店和房間的查詢結果
+                                    // 建立包含飯店和房間的查詢結果
                         HotelSearchBoxDTO = new HotelSearchBoxDTO
                         {
                             HotelId = x.Hotel.HotelId,
@@ -124,40 +139,45 @@ namespace PrjFunNowWebApi.Controllers
                                 .Select(re => re.RoomEquipment.RoomEquipmentName)
                                 .Distinct()// 去除重複的設備名稱
                                 .ToList(),// 獲取所有選擇房間的設備名稱，去重覆後轉換為列表(代表旅館內所有房間的設備)
-                            TotalAverageScore = GetAverageScoreForHotel(x.Hotel.HotelId) // 调用方法获取评分
+                            TotalAverageScore = GetAverageScoreForHotel(x.Hotel.HotelId), // 调用方法获取评分
+                            AvailableRooms = x.AvailableRooms,  // 設置空房間數
+                            HotelOrderCount = x.HotelOrderCount // 設置訂單數量
+
                         }
                     });
-                
+
+                // 处理其他筛选条件和排序逻辑
                 if (!string.IsNullOrEmpty(indexhotelSearchDTO.keyword))
-                {// 處理搜尋關鍵字、價格、飯店類型等篩選條件
-                    hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) || 
-                    s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword) ||
-                    s.Hotel.City.CityName.Contains(indexhotelSearchDTO.keyword));
+                {
+                    hotelsQuery = hotelsQuery.Where(s => s.Hotel.HotelName.Contains(indexhotelSearchDTO.keyword) ||
+                                                         s.Hotel.HotelDescription.Contains(indexhotelSearchDTO.keyword) ||
+                                                         s.Hotel.City.CityName.Contains(indexhotelSearchDTO.keyword) ||
+                                                         s.Hotel.HotelType.HotelTypeName.Contains(indexhotelSearchDTO.keyword)); // 新增HotelTypeName搜尋條件
                 }
-                
+
                 if (indexhotelSearchDTO.lowerPrice.HasValue && indexhotelSearchDTO.upperPrice.HasValue)
-                {// 如果設定了價格範圍，則根據價格範圍篩選飯店
-                    hotelsQuery = hotelsQuery.Where(h => h.HotelSearchBoxDTO.HotelPrice >= indexhotelSearchDTO.lowerPrice.Value && // 篩選飯店價格不低於下限
-                    h.HotelSearchBoxDTO.HotelPrice <= indexhotelSearchDTO.upperPrice.Value); // 篩選飯店價格不高於上限
+                {
+                    hotelsQuery = hotelsQuery.Where(h => h.HotelSearchBoxDTO.HotelPrice >= indexhotelSearchDTO.lowerPrice.Value &&
+                    h.HotelSearchBoxDTO.HotelPrice <= indexhotelSearchDTO.upperPrice.Value);
                 }
 
                 if (indexhotelSearchDTO.HotelTypes != null && indexhotelSearchDTO.HotelTypes.Any())
-                {// 如果設定了飯店類型，則根據飯店類型篩選飯店
+                {
                     hotelsQuery = hotelsQuery.Where(h => indexhotelSearchDTO.HotelTypes.Contains(h.Hotel.HotelTypeId));
                 }
 
                 if (indexhotelSearchDTO.HotelEquipments != null && indexhotelSearchDTO.HotelEquipments.Any())
-                {// 如果設定了飯店設備，則根據飯店設備篩選飯店
+                {
                     hotelsQuery = hotelsQuery.Where(h => h.Hotel.HotelEquipmentReferences.Any(e => indexhotelSearchDTO.HotelEquipments.Contains(e.HotelEquipment.HotelEquipmentId)));
                 }
 
                 if (indexhotelSearchDTO.Cities != null && indexhotelSearchDTO.Cities.Any())
-                {// 如果設定了城市，則根據城市篩選飯店
+                {
                     hotelsQuery = hotelsQuery.Where(h => indexhotelSearchDTO.Cities.Contains(h.Hotel.CityId));
                 }
 
                 if (indexhotelSearchDTO.RoomEquipments != null && indexhotelSearchDTO.RoomEquipments.Any())
-                {// 如果設定了房間設備，則根據房間設備篩選飯店
+                {
                     hotelsQuery = hotelsQuery.Where(h => h.TopRooms.Any(r => r.RoomEquipmentReferences.Any(re => indexhotelSearchDTO.RoomEquipments.Contains(re.RoomEquipment.RoomEquipmentId))));
                 }
 
@@ -180,16 +200,21 @@ namespace PrjFunNowWebApi.Controllers
                         hotelsQuery = indexhotelSearchDTO.sortType == "asc" ? hotelsQuery.OrderBy(s => s.HotelSearchBoxDTO.HotelId) : hotelsQuery.OrderByDescending(s => s.HotelSearchBoxDTO.HotelId);
                         break;
                 }
+
                 // 將字符串轉換為 List<string>
                 var hotelList = hotelsQuery.Select(x => x.HotelSearchBoxDTO).ToList();
 
                 foreach (var hotel in hotelList)
-                {  //將飯店設備名稱的字符串按逗號分隔，轉換為列表，並去除空白
+                {
+                    // 將飯店設備名稱的字符串按逗號分隔，轉換為列表，並去除空白
                     hotel.HotelEquipmentNames = hotel.HotelEquipmentNames
-                        .SelectMany(names => names.Split(','))// 按逗號分隔設備名稱
-                        .Select(name => name.Trim()).ToList();// 去除每個設備名稱前後的空白，將結果轉換為列表
-                    hotel.RoomEquipmentNames = hotel.RoomEquipmentNames.SelectMany(names => names.Split(',')).Select(name => name.Trim()).ToList();
+                        .SelectMany(names => names.Split(',')) // 按逗號分隔設備名稱
+                        .Select(name => name.Trim()).ToList(); // 去除每個設備名稱前後的空白，將結果轉換為列表
+                    hotel.RoomEquipmentNames = hotel.RoomEquipmentNames
+                        .SelectMany(names => names.Split(',')) // 按逗號分隔設備名稱
+                        .Select(name => name.Trim()).ToList(); // 去除每個設備名稱前後的空白，將結果轉換為列表
                 }
+
                 // 返回處理過的飯店列表，並以 200 OK 狀態碼作為回應
                 return Ok(hotelList);
             }
@@ -198,6 +223,9 @@ namespace PrjFunNowWebApi.Controllers
                 return StatusCode(500, "發生錯誤：" + ex.Message);
             }
         }
+
+
+
 
         private decimal? GetAverageScoreForHotel(int hotelId)
         {   // 從評論中獲取所有評分
@@ -257,6 +285,18 @@ namespace PrjFunNowWebApi.Controllers
             _context.SaveChanges();
 
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("likedHotels/{memberId}")]
+        public async Task<ActionResult<IEnumerable<int>>> GetLikedHotels(int memberId)
+        {
+            var likedHotelIds = await _context.HotelLikes
+                .Where(like => like.MemberId == memberId && like.LikeStatus)
+                .Select(like => like.HotelId)
+                .ToListAsync();
+
+            return Ok(likedHotelIds);
         }
     }
 

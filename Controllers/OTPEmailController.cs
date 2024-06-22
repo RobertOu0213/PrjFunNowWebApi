@@ -5,6 +5,7 @@ using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
 using System.Net.Mail;
 using static System.Net.WebRequestMethods;
+using BCrypt.Net;
 
 
 
@@ -36,7 +37,10 @@ namespace PrjFunNowWebApi.Controllers
                 return BadRequest("一開始資料庫就沒有這個會員");
             }
 
-            member.Password = editPwd.Password;
+            // 使用 BCrypt 來雜湊新密碼
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(editPwd.Password);
+
+            member.Password = hashedPassword;
 
             try
             {
