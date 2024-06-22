@@ -76,6 +76,7 @@ namespace PrjFunNowWebApi.Controllers
                                                         CommentText = c.CommentText,
                                                         CreatedAt = c.CreatedAt,
                                                         RatingScores = ratingGroup.ToList(),
+                                                        MemberId = c.MemberId
                                                     };
 
                 //commentsQuery = commentsQuery.AsNoTracking(); // 禁用跟踪
@@ -86,12 +87,12 @@ namespace PrjFunNowWebApi.Controllers
 
                 if (ratingFilter.HasValue)
                 {
-                    commentsQuery = ApplyRatingFilter(commentsQuery, ratingFilter.Value);
+                    commentsQuery = ApplyRatingFilter(commentsQuery, hotelId, ratingFilter.Value);
                 }
 
                 if (!string.IsNullOrEmpty(dateFilter))
                 {
-                    commentsQuery = ApplyDateFilter(commentsQuery, dateFilter);
+                    commentsQuery = ApplyDateFilter(commentsQuery, hotelId, dateFilter);
                 }
 
                 if (!string.IsNullOrEmpty(topics))
@@ -124,15 +125,25 @@ namespace PrjFunNowWebApi.Controllers
                 var commentIds = pagedComments.Select(c => c.CommentId).ToList();
 
                 // 使用分页后的评论ID列表查询 memberInfo
-                var memberInfo = _context.CommentWithInfos
-                    .Where(ci => commentIds.Contains(ci.CommentId))
-                    .Select(ci => new
-                    {
-                        ci.CommentId,
-                        ci.FirstName,
-                        ci.TravelerType,
-                        ci.RoomTypeName
-                    }).ToList();
+                //.Where(ci => commentIds.Contains(ci.CommentId))
+                //.Select(ci => new
+                //{
+                //    ci.CommentId,
+                //    ci.FirstName,
+                //    ci.TravelerType,
+                //    ci.RoomTypeName
+                //}).ToList(); var memberInfo = _context.CommentWithInfos
+
+
+                var memberInfoList = _context.CommentWithInfos
+            .Where(ci => commentIds.Contains(ci.CommentId))
+            .Select(ci => new
+            {
+                ci.CommentId,
+                ci.FirstName,
+                ci.TravelerType,
+                ci.RoomTypeName
+            }).ToList();
 
                 var comments = pagedComments
                     .Select(c => new CommentResponse
@@ -153,7 +164,10 @@ namespace PrjFunNowWebApi.Controllers
                             LocationScore = r.LocationScore ?? 0,
                             FreeWifiScore = r.FreeWifiScore ?? 0,
                             TravelerType = r.TravelerType
-                        }).ToList()
+                        }).ToList(),
+                        FirstName = memberInfoList.FirstOrDefault(m => m.CommentId == c.CommentId)?.FirstName,
+                        TravelerType = memberInfoList.FirstOrDefault(m => m.CommentId == c.CommentId)?.TravelerType,
+                        RoomTypeName = memberInfoList.FirstOrDefault(m => m.CommentId == c.CommentId)?.RoomTypeName
                     }).ToList();
 
                 var hotelName = _context.Hotels
@@ -172,7 +186,7 @@ namespace PrjFunNowWebApi.Controllers
                     TotalItems = totalItems,
                     Comments = comments,
                     HotelName = hotelName,
-                    MemberInfo = memberInfo
+                   
                 });
             }
             catch (Exception ex)
@@ -187,37 +201,37 @@ namespace PrjFunNowWebApi.Controllers
 
         //評分過濾
         [HttpGet("commentCounts")]
-        public async Task<IActionResult> GetCommentCounts()
+        public async Task<IActionResult> GetCommentCounts(int hotelId)
         {
 
             // 计算评分评论数量和详细信息
             var ratingCommentDetails = new Dictionary<int, object>
     {
-        { 2, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 2).CountAsync(), Comments = await GetCommentsByRating(2) } },
-        { 3, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 3).CountAsync(), Comments = await GetCommentsByRating(3) } },
-        { 4, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 4).CountAsync(), Comments = await GetCommentsByRating(4) } },
-        { 5, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 5).CountAsync(), Comments = await GetCommentsByRating(5) } },
-        { 6, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(), 6).CountAsync(), Comments = await GetCommentsByRating(6) } },
+        { 2, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(),hotelId, 2).CountAsync(), Comments = await GetCommentsByRating(hotelId,2) } },
+        { 3, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(),hotelId, 3).CountAsync(), Comments = await GetCommentsByRating(hotelId,3) } },
+        { 4, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(),hotelId, 4).CountAsync(), Comments = await GetCommentsByRating(hotelId,4) } },
+        { 5, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(),hotelId, 5).CountAsync(), Comments = await GetCommentsByRating(hotelId,5) } },
+        { 6, new { Count = await ApplyRatingFilter(_context.Comments.AsQueryable(),hotelId, 6).CountAsync(), Comments = await GetCommentsByRating(hotelId,6) } },
     };
 
             // 計算月份評論數量和詳細信息
             var dateCommentDetails = new Dictionary<string, object>
     {
-        { "1-3", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "1-3").CountAsync(), Comments = await GetCommentsByDateRange("1-3") } },
-        { "4-6", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "4-6").CountAsync(), Comments = await GetCommentsByDateRange("4-6") } },
-        { "7-9", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "7-9").CountAsync(), Comments = await GetCommentsByDateRange("7-9") } },
-        { "10-12", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), "10-12").CountAsync(), Comments = await GetCommentsByDateRange("10-12") } },
+        { "1-3", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(),hotelId, "1-3").CountAsync(), Comments = await GetCommentsByDateRange(hotelId,"1-3") } },
+        { "4-6", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), hotelId,"4-6").CountAsync(), Comments = await GetCommentsByDateRange(hotelId,"4-6") } },
+        { "7-9", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(), hotelId, "7-9").CountAsync(), Comments = await GetCommentsByDateRange(hotelId,"7-9") } },
+        { "10-12", new { Count = await ApplyDateFilter(_context.Comments.AsQueryable(),hotelId, "10-12").CountAsync(), Comments = await GetCommentsByDateRange(hotelId,"10-12") } },
     };
 
-            var total = await _context.Comments.CountAsync();
+            var total = await _context.Comments.Where(c => c.HotelId == hotelId).CountAsync();
 
             return Ok(new { total, RatingCommentDetails = ratingCommentDetails, DateCommentDetails = dateCommentDetails });
         }
 
-        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int ratingFilter)
+        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByRating(int hotelId, int ratingFilter)
         {
 
-            var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), ratingFilter)
+            var comments = await ApplyRatingFilter(_context.Comments.AsQueryable(), hotelId, ratingFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
 
@@ -238,10 +252,10 @@ namespace PrjFunNowWebApi.Controllers
             return comments;
         }
 
-        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(string dateFilter)
+        private async Task<List<CommentResponseDTO.CommentResponse>> GetCommentsByDateRange(int hotelId, string dateFilter)
         {
 
-            var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), dateFilter)
+            var comments = await ApplyDateFilter(_context.Comments.AsQueryable(), hotelId, dateFilter)
                                .Select(c => new CommentResponseDTO.CommentResponse
                                {
 
@@ -262,8 +276,9 @@ namespace PrjFunNowWebApi.Controllers
             return comments;
         }
 
-        private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int ratingFilter)
+        private IQueryable<Comment> ApplyRatingFilter(IQueryable<Comment> query, int hotelId, int ratingFilter)
         {
+            query = query.Where(c => c.HotelId == hotelId);
             var ratingText = RatingTxtgforA(query);
 
             switch (ratingFilter)
@@ -299,8 +314,10 @@ namespace PrjFunNowWebApi.Controllers
             return query;
         }
 
-        private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, string dateFilter, int? year = null)
+        private IQueryable<Comment> ApplyDateFilter(IQueryable<Comment> query, int hotelId, string dateFilter, int? year = null)
         {
+            query = query.Where(c => c.HotelId == hotelId);
+
             var (startMonth, endMonth) = GetStartAndEndMonths(dateFilter);
             if (startMonth != 0 && endMonth != 0)
             {

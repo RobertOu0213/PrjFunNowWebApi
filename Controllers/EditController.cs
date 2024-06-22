@@ -67,8 +67,9 @@ namespace PrjFunNowWebApi.Controllers
                 return BadRequest("會員不存在");
             }
 
-            
-            if (member.Password == checkPasswordDto.Password)
+
+            // 使用 BCrypt.Verify 方法來比對密碼
+            if (BCrypt.Net.BCrypt.Verify(checkPasswordDto.Password, member.Password))
             {
                 return Ok("密碼正確");
             }

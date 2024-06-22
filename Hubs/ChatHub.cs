@@ -9,6 +9,7 @@ public class ChatHub : Hub
         ConnectionIds.Add(Context.ConnectionId);
         Clients.All.SendAsync("UpdList", System.Text.Json.JsonSerializer.Serialize(ConnectionIds));
         Clients.Caller.SendAsync("UpdSelfID", Context.ConnectionId);
+        Console.WriteLine($"Connected: {Context.ConnectionId}");
         return base.OnConnectedAsync();
     }
 
@@ -16,6 +17,7 @@ public class ChatHub : Hub
     {
         ConnectionIds.Remove(Context.ConnectionId);
         Clients.All.SendAsync("UpdList", System.Text.Json.JsonSerializer.Serialize(ConnectionIds));
+        Console.WriteLine($"Disconnected: {Context.ConnectionId}");
         return base.OnDisconnectedAsync(exception);
     }
 

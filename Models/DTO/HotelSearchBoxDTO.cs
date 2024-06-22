@@ -52,6 +52,9 @@
 
         public decimal? TotalAverageScore { get; set; }
 
+        public int AvailableRooms { get; set; }  // 新增這行 空房間數
+
+
 
         // 解析設備名稱和房間設備名稱
         public void ParseEquipmentNames(string hotelEquipmentNames, string roomEquipmentNames)
