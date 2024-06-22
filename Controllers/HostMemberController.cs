@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PrjFunNowWebApi.Models;
 using PrjFunNowWebApi.Models.DTO;
+using System.Globalization;
+using TinyPinyin;
 
 namespace PrjFunNowWebApi.Controllers
 {
@@ -78,73 +80,42 @@ namespace PrjFunNowWebApi.Controllers
         }
 
 
-        ////修改會員所有資料，因為要加圖片上傳，所以移到MVC web專案裏去了
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> HostMemberEdit(int id, HostMemberEditDTO edit)
-        //{
-        //    var member = await _context.Members.FindAsync(id);
-        //    if (member == null)
-        //    {
-        //        return BadRequest("一開始資料庫就沒有這個會員");
-        //    }
+        //【Get】根據MemberID查詢會員資料
+        [HttpGet]
+        [Route("searchByID")]
+        public async Task<ActionResult<Member>> GetMemberByID(int ID)
+        {
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.MemberId == ID);
+            if (member == null)
+            {
+                return NotFound();
+            }
 
-        //    member.FirstName = edit.FirstName;
-        //    member.LastName = edit.LastName;
-        //    member.Phone = edit.Phone;
-        //    member.Birthday = edit.Birthday;
-        //    member.CityId = edit.CityId;
-        //    member.MemberAddress = edit.MemberAddress;
-        //    member.Introduction = edit.Introduction;
+            // 假設FirstName為中文時，需要轉換成羅馬拼音
+            if (IsChinese(member.FirstName))
+            {
+                member.FirstName = PinyinHelper.GetPinyin(member.FirstName);
+            }
 
+            return member;
+        }
 
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!MemberExists(id))
-        //        {
-        //            return BadRequest("你在把更新資料存進資料庫時找不到這個會員了");
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-
-        //    return Ok("會員資料修改成功");
-        //}
-
-        //private bool MemberExists(int id)
-        //{
-        //    return _context.Members.Any(e => e.MemberId == id);
-        //}
-
-
-        //public class HostMemberEditDTO
-        //{
-
-        //    public string FirstName { get; set; }
-
-        //    public string LastName { get; set; }
-
-        //    public string Phone { get; set; }
-
-        //    public DateTime? Birthday { get; set; }
-
-        //    public int? CityId { get; set; }
-
-        //    public string MemberAddress { get; set; }
-
-        //    public string Introduction { get; set; }
-
-
-        //}
+        // 判斷字符串是否包含中文字符
+        private bool IsChinese(string input)
+        {
+            foreach (char c in input)
+            {
+                if (char.GetUnicodeCategory(c) == UnicodeCategory.OtherLetter)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
 
 
-       
+
 
     }
 }
