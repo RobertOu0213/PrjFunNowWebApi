@@ -186,7 +186,8 @@ namespace PrjFunNowWebApi.Controllers
                     TotalItems = totalItems,
                     Comments = comments,
                     HotelName = hotelName,
-                   
+                    MemberList = memberInfoList
+
                 });
             }
             catch (Exception ex)
