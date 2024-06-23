@@ -19,6 +19,35 @@ namespace PrjFunNowWebApi.Controllers
             _context = context;
         }
 
+        [HttpGet]  //地圖找圖功能
+        public async Task<ActionResult<IEnumerable<HotelSearchBoxDTO>>> GetHotels()
+        {
+            var hotels = await _context.Hotels
+                .Select(h => new HotelSearchBoxDTO
+                {
+                    HotelId = h.HotelId,
+                    HotelName = h.HotelName,
+                    HotelAddress = h.HotelAddress,
+                    HotelPhone = h.HotelPhone,
+                    HotelDescription = h.HotelDescription,
+                    LevelStar = h.LevelStar,
+                    Latitude = h.Latitude,
+                    Longitude = h.Longitude,
+                    IsActive = h.IsActive,
+                    MemberId = h.MemberId,
+                    CityId = h.CityId,
+                    CityName = h.City.CityName,
+                    HotelImages = h.HotelImages.Select(img => img.HotelImage1).ToList(),
+                    HotelTypeId = h.HotelTypeId,
+                    HotelTypeName = h.HotelType.HotelTypeName,
+                    HotelPrice = (int)Math.Round(h.Rooms.Average(p => p.RoomPrice)),
+                })
+                .ToListAsync();
+
+            return Ok(hotels);
+        }
+
+
 
         [HttpGet]
         [Route("suggestions")]   //Autocomplete功能
