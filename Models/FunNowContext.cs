@@ -122,7 +122,7 @@ public partial class FunNowContext : DbContext
             entity.HasOne(d => d.Member).WithMany(p => p.Comments)
                 .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Comments_Member1");
+                .HasConstraintName("FK_Comments_Member");
         });
 
         modelBuilder.Entity<CommentTravelerType>(entity =>
@@ -229,7 +229,7 @@ public partial class FunNowContext : DbContext
             entity.HasOne(d => d.Member).WithMany(p => p.Hotels)
                 .HasForeignKey(d => d.MemberId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Hotel_Member1");
+                .HasConstraintName("FK_Hotel_Member");
         });
 
         modelBuilder.Entity<HotelEquipment>(entity =>
