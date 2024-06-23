@@ -141,6 +141,10 @@
       {
          "Name": "[dbo].[HotelSearchBox]",
          "ObjectType": 3
+      },
+      {
+         "Name": "[dbo].[UpdateIsExpired]",
+         "ObjectType": 1
       }
    ],
    "UiHint": null,

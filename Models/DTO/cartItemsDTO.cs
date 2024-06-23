@@ -22,5 +22,6 @@
         public int HotelID { get; set; }
         
         public int? GuestNumber { get; set; }
+        public bool? IsExpired { get; set; }
     }
 }
