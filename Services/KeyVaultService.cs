@@ -3,6 +3,7 @@ using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Threading.Tasks;
+using DotNetEnv;
 
 namespace PrjFunNowWebApi.Services
 {
@@ -13,11 +14,13 @@ namespace PrjFunNowWebApi.Services
 
         public KeyVaultService(IConfiguration configuration)
         {
+            Env.Load();
+            string clientSecret = Environment.GetEnvironmentVariable("AZURE_CLIENT_SECRET");
             _configuration = configuration;
             var clientSecretCredential = new ClientSecretCredential(
                 _configuration["AzureAD:TenantId"],
                 _configuration["AzureAD:ClientId"],
-                _configuration["AzureAD:ClientSecret"]);
+                clientSecret);
 
             _client = new SecretClient(new Uri(_configuration["KeyVault:BaseUrl"]), clientSecretCredential);
         }

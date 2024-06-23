@@ -127,8 +127,8 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                         ImageCategoryID = img.ImageCategoryReferences.Select(ic => ic.ImageCategoryId).FirstOrDefault(),
                         ImageCategoryName = img.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
                     }).FirstOrDefault(),
-                    Latitude = h.Latitude,
-                    Longitude = h.Longitude
+                    Latitude = string.IsNullOrEmpty(h.Latitude) ? "0.0" : h.Latitude,
+                    Longitude = string.IsNullOrEmpty(h.Longitude) ? "0.0" : h.Longitude
                 })
                 .ToListAsync();
 
