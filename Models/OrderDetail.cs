@@ -25,6 +25,8 @@ public partial class OrderDetail
 
     public int? GuestNumber { get; set; }
 
+    public bool? IsExpired { get; set; }
+
     public virtual Member Member { get; set; }
 
     public virtual Order Order { get; set; }

@@ -65,7 +65,8 @@ namespace PrjFunNowWebApi.Controllers.cart
                     AllOrderDetailsCount = allOrderDetailsCount,
                     RoomImage = od.Room?.RoomImages?.FirstOrDefault()?.RoomImage1,
                     HotelID = od.Room?.Hotel?.HotelId ?? 0,
-                    GuestNumber = od.GuestNumber
+                    GuestNumber = od.GuestNumber,
+                    IsExpired = od.IsExpired
                 }).ToList();
 
                 return Ok(new { success=true, orderDetailDtos});
@@ -86,6 +87,7 @@ namespace PrjFunNowWebApi.Controllers.cart
             {
                 orderDetail.CreatedAt = DateTime.Now;
                 orderDetail.IsOrdered = false;
+                orderDetail.IsExpired = false;
 
                 _context.OrderDetails.Add(orderDetail);
                 await _context.SaveChangesAsync();
