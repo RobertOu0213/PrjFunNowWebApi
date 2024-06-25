@@ -86,7 +86,7 @@ namespace PrjFunNowWebApi.Controllers
                 CheckOutDate = date,
                 GuestNumber = 0,
                 IsOrdered = true,
-                OrderId = 1028,
+                OrderId = 1,
                 CreatedAt = DateTime.Now
             };
 
