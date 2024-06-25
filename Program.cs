@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using PrjFunNowWebApi.Services;
 using System.Text.Json.Serialization;
+using Microsoft.ApplicationInsights.AspNetCore.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,11 @@ builder.Services.AddHttpClient();
 // 添加控制器服務
 builder.Services.AddControllers();
 
+// 添加 Application Insights 服務
+builder.Services.AddApplicationInsightsTelemetry(options =>
+{
+    options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+});
 
 // 添加 Swagger 相關服務
 builder.Services.AddEndpointsApiExplorer();
