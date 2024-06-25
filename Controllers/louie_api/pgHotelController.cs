@@ -108,7 +108,8 @@ namespace PrjFunNowWebApi.Controllers.louie_api
             }).ToList();
 
             // 添加房間檢查，避免計算平均價格時出錯
-            decimal averageRoomPrice = rooms.Any(r => !r.IsBooked) ? rooms.Where(r => !r.IsBooked).Average(r => r.RoomPrice) : 0;
+            decimal averageRoomPrice = rooms.Any(r => !r.IsBooked) ? Math.Ceiling(rooms.Where(r => !r.IsBooked).Average(r => r.RoomPrice)) : 0;
+
 
             var similarHotels = await _context.Hotels
                 .Where(h => h.City.CityId == hotel.City.CityId && h.HotelId != id)
@@ -119,7 +120,8 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     HotelName = h.HotelName,
                     HotelAddress = h.HotelAddress,
                     LevelStar = (int)h.LevelStar,
-                    AverageRoomPrice = h.Rooms.Any() ? h.Rooms.Average(r => r.RoomPrice) : 0, // 添加房間檢查，避免計算平均價格時出錯
+                    AverageRoomPrice = h.Rooms.Any() ? (int)Math.Ceiling(h.Rooms.Average(r => r.RoomPrice)) : 0,
+ // 添加房間檢查，避免計算平均價格時出錯
                     AvailableRooms = h.Rooms.Count(),
                     HotelImage = h.HotelImages.Select(img => new pgHotel_ImageDTO
                     {
@@ -165,7 +167,7 @@ namespace PrjFunNowWebApi.Controllers.louie_api
                     ImageCategoryName = i.ImageCategoryReferences.Select(ic => ic.ImageCategory.ImageCategoryName).FirstOrDefault()
                 }).ToList(),
                 Rooms = rooms,
-                AverageRoomPrice = hotel.Rooms.Average(r => r.RoomPrice),
+                AverageRoomPrice = hotel.Rooms.Any() ? (int)Math.Ceiling(hotel.Rooms.Average(r => r.RoomPrice)) : 0,
                 SimilarHotels = similarHotels.ToList()
             };
 
