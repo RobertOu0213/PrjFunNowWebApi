@@ -65,7 +65,7 @@ namespace PrjFunNowWebApi.Controllers
                             City = h.City.CityName,
                             Country = h.City.Country.CountryName,
                             LevelStar = h.LevelStar,
-                            MinimumPrice = h.Rooms.Min(r => r.RoomPrice),
+                            HotelPrice = (int)Math.Round(h.Rooms.Average(p => p.RoomPrice)),
                             HotelImage = h.HotelImages.FirstOrDefault().HotelImage1
                         })
                         .ToListAsync();
