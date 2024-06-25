@@ -65,7 +65,7 @@ namespace PrjFunNowWebApi.Controllers
                             City = h.City.CityName,
                             Country = h.City.Country.CountryName,
                             LevelStar = h.LevelStar,
-                            MinimumPrice = h.Rooms.Min(r => r.RoomPrice),
+                            HotelPrice = (int)Math.Round(h.Rooms.Average(p => p.RoomPrice)),
                             HotelImage = h.HotelImages.FirstOrDefault().HotelImage1
                         })
                         .ToListAsync();
@@ -93,7 +93,7 @@ namespace PrjFunNowWebApi.Controllers
                     hotel.City,
                     hotel.Country,
                     hotel.LevelStar,
-                    hotel.MinimumPrice,
+                    hotel.HotelPrice,
                     hotel.HotelImage,
                     Rating = response,  // 将评分添加到输出中
                     TotalComments = commentCountResponse  // 新添加的評論總數
