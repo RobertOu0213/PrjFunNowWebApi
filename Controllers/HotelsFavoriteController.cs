@@ -93,7 +93,7 @@ namespace PrjFunNowWebApi.Controllers
                     hotel.City,
                     hotel.Country,
                     hotel.LevelStar,
-                    hotel.MinimumPrice,
+                    hotel.HotelPrice,
                     hotel.HotelImage,
                     Rating = response,  // 将评分添加到输出中
                     TotalComments = commentCountResponse  // 新添加的評論總數
