@@ -31,7 +31,10 @@ builder.Services.AddCors(options =>
 });
 
 // 添加 SignalR 服務
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 10 * 1024 * 1024; // 10 MB
+});
 
 // 添加 HttpClient 服務
 builder.Services.AddHttpClient();

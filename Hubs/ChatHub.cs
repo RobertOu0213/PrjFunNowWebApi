@@ -78,18 +78,19 @@ public class ChatHub : Hub
         // 示例實現：發送消息記錄
         await Clients.Caller.SendAsync("UpdContent", "Here are your messages...");
     }
+
     public async Task SendFile(string senderId, byte[] fileData, string fileName, string receiverId)
     {
         try
         {
-            // 處理文件數據，例如保存到服務器或數據庫
+            var base64FileData = Convert.ToBase64String(fileData);
             if (string.IsNullOrEmpty(receiverId) || !UserConnections.ContainsKey(receiverId))
             {
-                await Clients.All.SendAsync("ReceiveFile", senderId, fileData, fileName);
+                await Clients.All.SendAsync("ReceiveFile", senderId, base64FileData, fileName);
             }
             else
             {
-                await Clients.Client(UserConnections[receiverId]).SendAsync("ReceiveFile", senderId, fileData, fileName);
+                await Clients.Client(UserConnections[receiverId]).SendAsync("ReceiveFile", senderId, base64FileData, fileName);
             }
         }
         catch (Exception ex)
@@ -98,4 +99,6 @@ public class ChatHub : Hub
             throw;
         }
     }
+
+
 }
