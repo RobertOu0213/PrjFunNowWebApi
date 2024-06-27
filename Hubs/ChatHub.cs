@@ -78,4 +78,24 @@ public class ChatHub : Hub
         // 示例實現：發送消息記錄
         await Clients.Caller.SendAsync("UpdContent", "Here are your messages...");
     }
+    public async Task SendFile(string senderId, byte[] fileData, string fileName, string receiverId)
+    {
+        try
+        {
+            // 處理文件數據，例如保存到服務器或數據庫
+            if (string.IsNullOrEmpty(receiverId) || !UserConnections.ContainsKey(receiverId))
+            {
+                await Clients.All.SendAsync("ReceiveFile", senderId, fileData, fileName);
+            }
+            else
+            {
+                await Clients.Client(UserConnections[receiverId]).SendAsync("ReceiveFile", senderId, fileData, fileName);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error in SendFile: {ex.Message}");
+            throw;
+        }
+    }
 }
